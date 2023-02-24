@@ -6,7 +6,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (m *Domain) OrderPayed(ctx context.Context, orderID int64) error {
+func (d *Domain) OrderPayed(ctx context.Context, orderID int64) error {
 	order, err := getOrder(orderID)
 	if err != nil {
 		return errors.Wrap(err, "get order")
