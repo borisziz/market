@@ -52,5 +52,7 @@ func getOrder(orderID int64) (*Order, error) {
 	if false {
 		return nil, ErrOrderNotFound
 	}
-	return &Order{ID: orderID, Status: StatusAwaitingPayment, User: 3, Items: []OrderItem{{Sku: 1076963, Count: 1}, {Sku: 1148162, Count: 3}}}, nil
+	defaultItems := []OrderItem{{Sku: 1076963, Count: 1}, {Sku: 1148162, Count: 3}}
+	defaultOrder := &Order{ID: orderID, Status: StatusAwaitingPayment, User: 3, Items: defaultItems}
+	return defaultOrder, nil
 }
