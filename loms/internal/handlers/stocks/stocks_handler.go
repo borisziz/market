@@ -2,7 +2,6 @@ package stocks
 
 import (
 	"context"
-	"log"
 	"route256/loms/internal/domain"
 
 	"github.com/pkg/errors"
@@ -35,7 +34,6 @@ func New(domain *domain.Domain) *Handler {
 }
 
 func (h *Handler) Handle(ctx context.Context, request Request) (Response, error) {
-	log.Printf("stocks: %+v", request)
 	var response Response
 	stocks, err := h.domain.Stocks(ctx, request.SKU)
 	if err != nil {

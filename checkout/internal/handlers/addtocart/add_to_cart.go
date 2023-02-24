@@ -3,7 +3,6 @@ package addtocart
 import (
 	"context"
 	"errors"
-	"log"
 	"route256/checkout/internal/domain"
 )
 
@@ -45,8 +44,6 @@ func (r Request) Validate() error {
 type Response struct{}
 
 func (h *Handler) Handle(ctx context.Context, req Request) (Response, error) {
-	log.Printf("addToCart: %+v", req)
-
 	var response Response
 
 	err := h.businessLogic.AddToCart(ctx, req.User, req.Sku, req.Count)
