@@ -37,10 +37,8 @@ type ProductsResponse struct {
 
 func (c *Client) GetProduct(ctx context.Context, sku uint32) (domain.ProductInfo, error) {
 	request := ProductsRequest{Token: c.token, SKU: sku}
-	var response ProductsResponse
-	w := clientwrapper.New(c.urlProducts, request, response)
 	var productInfo domain.ProductInfo
-	response, err := w.ClientRequest(ctx)
+	response, err := clientwrapper.ClientRequest[ProductsRequest, ProductsResponse]()(ctx, c.urlProducts, request)
 	if err != nil {
 		return productInfo, errors.Wrap(err, "client request")
 	}
@@ -62,9 +60,7 @@ type SKUsResponse struct {
 
 func (c *Client) GetSKUs(ctx context.Context) (domain.SKUs, error) {
 	request := SKUsRequest{Token: c.token, StartAfterSku: 0, Count: 1000}
-	var response SKUsResponse
-	w := clientwrapper.New(c.urlProducts, request, response)
-	response, err := w.ClientRequest(ctx)
+	response, err := clientwrapper.ClientRequest[SKUsRequest, SKUsResponse]()(ctx, c.urlSKUs, request)
 	if err != nil {
 		return nil, errors.Wrap(err, "client request")
 	}

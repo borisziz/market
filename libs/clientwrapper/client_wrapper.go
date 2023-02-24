@@ -10,42 +10,31 @@ import (
 	"github.com/pkg/errors"
 )
 
-type Wrapper[Req any, Res any] struct {
-	url      string
-	request  Req
-	response Res
-}
+func ClientRequest[Req any, Res any]() func(ctx context.Context, url string, req Req) (Res, error) {
+	return func(ctx context.Context, url string, req Req) (Res, error) {
+		var response Res
+		rawJSON, err := json.Marshal(req)
+		if err != nil {
+			return response, errors.Wrap(err, "marshaling json")
+		}
 
-func New[Req any, Res any](url string, request Req, response Res) *Wrapper[Req, Res] {
-	return &Wrapper[Req, Res]{
-		url:      url,
-		request:  request,
-		response: response,
-	}
-}
+		httpRequest, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(rawJSON))
+		if err != nil {
+			return response, errors.Wrap(err, "creating http request")
+		}
+		httpResponse, err := http.DefaultClient.Do(httpRequest)
+		if err != nil {
+			return response, errors.Wrap(err, "calling http")
+		}
+		defer httpResponse.Body.Close()
 
-func (w *Wrapper[Req, Res]) ClientRequest(ctx context.Context) (Res, error) {
-	rawJSON, err := json.Marshal(w.request)
-	if err != nil {
-		return w.response, errors.Wrap(err, "marshaling json")
+		if httpResponse.StatusCode != http.StatusOK {
+			return response, fmt.Errorf("wrong status code: %d", httpResponse.StatusCode)
+		}
+		err = json.NewDecoder(httpResponse.Body).Decode(&response)
+		if err != nil {
+			return response, errors.Wrap(err, "decoding json")
+		}
+		return response, nil
 	}
-
-	httpRequest, err := http.NewRequestWithContext(ctx, http.MethodPost, w.url, bytes.NewBuffer(rawJSON))
-	if err != nil {
-		return w.response, errors.Wrap(err, "creating http request")
-	}
-	httpResponse, err := http.DefaultClient.Do(httpRequest)
-	if err != nil {
-		return w.response, errors.Wrap(err, "calling http")
-	}
-	defer httpResponse.Body.Close()
-
-	if httpResponse.StatusCode != http.StatusOK {
-		return w.response, fmt.Errorf("wrong status code: %d", httpResponse.StatusCode)
-	}
-	err = json.NewDecoder(httpResponse.Body).Decode(&w.response)
-	if err != nil {
-		return w.response, errors.Wrap(err, "decoding json")
-	}
-	return w.response, nil
 }

@@ -39,9 +39,7 @@ type StocksResponse struct {
 
 func (c *Client) Stocks(ctx context.Context, sku uint32) ([]domain.Stock, error) {
 	request := StocksRequest{SKU: sku}
-	var response StocksResponse
-	w := clientwrapper.New(c.urlStocks, request, response)
-	response, err := w.ClientRequest(ctx)
+	response, err := clientwrapper.ClientRequest[StocksRequest, StocksResponse]()(ctx, c.urlStocks, request)
 	if err != nil {
 		return nil, errors.Wrap(err, "client request")
 	}
@@ -74,10 +72,8 @@ func (c *Client) CreateOrder(ctx context.Context, user int64, cartItems []domain
 	for _, v := range cartItems {
 		request.Items = append(request.Items, Item{Sku: v.Sku, Count: v.Count})
 	}
-	var response CreateOrderResponse
 	var orderID domain.OrderID
-	w := clientwrapper.New(c.urlCreateOrder, request, response)
-	response, err := w.ClientRequest(ctx)
+	response, err := clientwrapper.ClientRequest[CreateOrderRequest, CreateOrderResponse]()(ctx, c.urlCreateOrder, request)
 	if err != nil {
 		return orderID, errors.Wrap(err, "client request")
 	}
