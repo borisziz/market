@@ -6,7 +6,7 @@ import (
 )
 
 func (i *Implementation) ListCart(ctx context.Context, req *desc.ListCartRequest) (*desc.ListCartResponse, error) {
-	cartItems, err := i.checkoutService.ListCart(ctx, req.User)
+	cartItems, err := i.checkoutService.ListCart(ctx, req.GetUser())
 	if err != nil {
 		return nil, err
 	}

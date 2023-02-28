@@ -7,7 +7,7 @@ import (
 )
 
 func (i *Implementation) AddToCart(ctx context.Context, req *desc.AddToCartRequest) (*emptypb.Empty, error) {
-	err := i.checkoutService.AddToCart(ctx, req.User, req.Sku, uint16(req.Count))
+	err := i.checkoutService.AddToCart(ctx, req.GetUser(), req.GetSku(), uint16(req.GetCount()))
 	if err != nil {
 		return nil, err
 	}

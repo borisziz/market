@@ -6,7 +6,7 @@ import (
 )
 
 func (i *Implementation) Purchase(ctx context.Context, req *desc.PurchaseRequest) (*desc.PurchaseResponse, error) {
-	orderID, err := i.checkoutService.Purchase(ctx, req.User)
+	orderID, err := i.checkoutService.Purchase(ctx, req.GetUser())
 	if err != nil {
 		return nil, err
 	}
