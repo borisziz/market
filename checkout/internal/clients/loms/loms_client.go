@@ -2,80 +2,48 @@ package loms
 
 import (
 	"context"
+	"google.golang.org/grpc"
 	"route256/checkout/internal/domain"
-	"route256/libs/clientwrapper"
+	loms "route256/loms/pkg/loms/v1"
 
 	"github.com/pkg/errors"
 )
 
 type Client struct {
-	url string
-
-	urlStocks      string
-	urlCreateOrder string
+	c loms.LOMSV1Client
 }
 
-func New(url string) *Client {
+func New(conn *grpc.ClientConn) *Client {
+	c := loms.NewLOMSV1Client(conn)
 	return &Client{
-		url: url,
-
-		urlStocks:      url + "/stocks",
-		urlCreateOrder: url + "/createOrder",
+		c: c,
 	}
 }
 
-type StocksRequest struct {
-	SKU uint32 `json:"sku"`
-}
-
-type StocksItem struct {
-	WarehouseID int64  `json:"warehouseID"`
-	Count       uint64 `json:"count"`
-}
-
-type StocksResponse struct {
-	Stocks []StocksItem `json:"stocks"`
-}
-
 func (c *Client) Stocks(ctx context.Context, sku uint32) ([]domain.Stock, error) {
-	request := StocksRequest{SKU: sku}
-	response, err := clientwrapper.ClientRequest[StocksRequest, StocksResponse]()(ctx, c.urlStocks, request)
+	request := &loms.StocksRequest{Sku: sku}
+	response, err := c.c.Stocks(ctx, request)
 	if err != nil {
 		return nil, errors.Wrap(err, "client request")
 	}
 	stocks := make([]domain.Stock, 0, len(response.Stocks))
 	for _, stock := range response.Stocks {
 		stocks = append(stocks, domain.Stock{
-			WarehouseID: stock.WarehouseID,
-			Count:       stock.Count,
+			WarehouseID: stock.GetWarehouseID(),
+			Count:       stock.GetCount(),
 		})
 	}
 	return stocks, nil
 }
 
-type CreateOrderRequest struct {
-	User  int64  `json:"user"`
-	Items []Item `json:"items"`
-}
-
-type Item struct {
-	Sku   uint32 `json:"sku"`
-	Count uint16 `json:"count"`
-}
-
-type CreateOrderResponse struct {
-	OrderID int64 `json:"orderID"`
-}
-
 func (c *Client) CreateOrder(ctx context.Context, user int64, cartItems []domain.CartItem) (int64, error) {
-	request := CreateOrderRequest{User: user}
+	request := &loms.CreateOrderRequest{User: user}
 	for _, v := range cartItems {
-		request.Items = append(request.Items, Item{Sku: v.Sku, Count: v.Count})
+		request.Items = append(request.Items, &loms.Item{Sku: v.Sku, Count: uint32(v.Count)})
 	}
-	response, err := clientwrapper.ClientRequest[CreateOrderRequest, CreateOrderResponse]()(ctx, c.urlCreateOrder, request)
+	response, err := c.c.CreateOrder(ctx, request)
 	if err != nil {
 		return 0, errors.Wrap(err, "client request")
 	}
-
-	return response.OrderID, nil
+	return response.GetOrderID(), nil
 }

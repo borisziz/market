@@ -3,6 +3,7 @@ package main
 import (
 	grpcValidator "github.com/grpc-ecosystem/go-grpc-middleware/validator"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"log"
 	"net"
 	"route256/checkout/internal/api/checkout/v1"
@@ -27,7 +28,12 @@ func main() {
 	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(grpcValidator.UnaryServerInterceptor()))
 
 	//clients
-	lomsClient := loms.New(config.ConfigData.Services.Loms)
+	connLoms, err := grpc.Dial(config.ConfigData.Services.Loms, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatal("failed create loms client: failed to connect to server:", err)
+	}
+	defer connLoms.Close()
+	lomsClient := loms.New(connLoms)
 	productsServiceClient := productservice.New(config.ConfigData.Token, config.ConfigData.Services.Products)
 	businessLogic := domain.New(lomsClient, productsServiceClient)
 
