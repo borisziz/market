@@ -7,7 +7,7 @@ type Stock struct {
 	Count       uint64
 }
 
-func (d *Domain) Stocks(ctx context.Context, sku uint32) ([]Stock, error) {
+func (d *domain) Stocks(ctx context.Context, sku uint32) ([]Stock, error) {
 	return []Stock{
 		{
 			WarehouseID: 123,

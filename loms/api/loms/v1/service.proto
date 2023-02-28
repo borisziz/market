@@ -1,0 +1,76 @@
+syntax = "proto3";
+
+package checkout_v1;
+
+option go_package = "route256/loms/pkg/loms_v1;loms_v1";
+
+import "google/protobuf/empty.proto";
+
+service LOMSV1 {
+  // Создает новый заказ
+  rpc CreateOrder(CreateOrderRequest) returns(CreateOrderResponse);
+  // Показывает информацию по заказу
+  rpc ListOrder(ListOrderRequest) returns (ListOrderResponse);
+  // Помечает заказ оплаченным
+  rpc OrderPayed(OrderPayedRequest) returns (google.protobuf.Empty);
+  // Отменяет заказ
+  rpc CancelOrder(CancelOrderRequest) returns (google.protobuf.Empty);
+  // Возвращает количество товаров, которые можно купить с разных складов.
+  rpc Stocks(StocksRequest) returns (StocksResponse);
+}
+
+
+message Item {
+  uint32 sku = 1;
+  uint32 count = 2;
+}
+
+message CreateOrderRequest {
+  int64 user = 1;
+  repeated Item items = 2;
+}
+
+message CreateOrderResponse {
+  int64 orderID = 1;
+}
+
+message ListOrderRequest {
+  int64 user = 1;
+}
+
+enum OrderStatus {
+  Undefined = 0;
+  New = 1;
+  AwaitingPayment = 2;
+  Failed = 3;
+  Payed = 4;
+  Cancelled = 5;
+}
+
+message ListOrderResponse {
+  OrderStatus status = 1;
+  int64 user = 2;
+  repeated Item items = 3;
+}
+
+message OrderPayedRequest {
+  int64 user = 1;
+}
+
+message CancelOrderRequest {
+  int64 user = 1;
+}
+
+message StocksRequest {
+  uint32 sku = 1;
+}
+
+message Stock {
+  int64 warehouseID = 1;
+  uint64 count = 2;
+}
+
+message StocksResponse {
+  repeated Stock stocks = 1;
+}
+

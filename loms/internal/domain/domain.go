@@ -5,17 +5,27 @@ import (
 	"errors"
 )
 
+var _ Domain = (*domain)(nil)
+
 type ProductServiceCaller interface {
 	GetProduct(ctx context.Context, sku uint32) (string, error)
 }
 
-type Domain struct {
+type Domain interface {
+	CreateOrder(ctx context.Context, user int64, items []OrderItem) (int64, error)
+	ListOrder(ctx context.Context, user int64) (*Order, error)
+	CancelOrder(ctx context.Context, user int64) error
+	Stocks(ctx context.Context, sku uint32) ([]Stock, error)
+	OrderPayed(ctx context.Context, user int64) error
+}
+
+type domain struct {
 }
 
 type SKUs map[int64]struct{}
 
-func New() *Domain {
-	return &Domain{}
+func New() *domain {
+	return &domain{}
 }
 
 type OrderItem struct {
@@ -36,6 +46,7 @@ const (
 	StatusFailed          = "failed"
 	StatusPayed           = "Payed"
 	StatusCancelled       = "Cancelled"
+	StatusUndefined       = "Undefined"
 )
 
 func createOrder(order Order) int64 {

@@ -1,18 +1,14 @@
 package main
 
 import (
+	grpcValidator "github.com/grpc-ecosystem/go-grpc-middleware/validator"
+	"google.golang.org/grpc"
 	"log"
-	"net/http"
-	"route256/libs/srvwrapper"
+	"net"
+	"route256/loms/internal/api/loms/v1"
 	"route256/loms/internal/config"
 	"route256/loms/internal/domain"
-	"route256/loms/internal/handlers/cancelorder"
-	"route256/loms/internal/handlers/createorder"
-	"route256/loms/internal/handlers/listorder"
-	"route256/loms/internal/handlers/orderpayed"
-	"route256/loms/internal/handlers/stocks"
-
-	"github.com/gorilla/mux"
+	desc "route256/loms/pkg/loms/v1"
 )
 
 func main() {
@@ -21,26 +17,19 @@ func main() {
 		log.Fatal("config init", err)
 	}
 
-	domain := domain.New()
+	lis, err := net.Listen("tcp", config.ConfigData.Port)
+	if err != nil {
+		log.Fatalf("failed listen tcp at %v port", config.ConfigData.Port)
+	}
 
-	stocksHandler := stocks.New(domain)
-	createOrderHandler := createorder.New(domain)
-	listOrderHandler := listorder.New(domain)
-	orderPayedHandler := orderpayed.New(domain)
-	cancelOrderHandler := cancelorder.New(domain)
+	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(grpcValidator.UnaryServerInterceptor()))
 
-	r := mux.NewRouter()
-	r.Handle("/stocks", srvwrapper.New(stocksHandler.Handle)).Methods("POST")
+	desc.RegisterLOMSV1Server(grpcServer, loms.New(domain.New()))
+	log.Printf("grps server running on port %v\n", config.ConfigData.Port)
 
-	r.Handle("/createOrder", srvwrapper.New(createOrderHandler.Handle)).Methods("POST")
+	err = grpcServer.Serve(lis)
+	if err != nil {
+		log.Fatalf("failed to serve: %v", err)
+	}
 
-	r.Handle("/listOrder", srvwrapper.New(listOrderHandler.Handle)).Methods("POST")
-
-	r.Handle("/orderPayed", srvwrapper.New(orderPayedHandler.Handle)).Methods("POST")
-
-	r.Handle("/cancelOrder", srvwrapper.New(cancelOrderHandler.Handle)).Methods("POST")
-
-	log.Println("listening http at", config.ConfigData.Port)
-	err = http.ListenAndServe(config.ConfigData.Port, r)
-	log.Fatal("cannot listen http", err)
 }
