@@ -67,17 +67,15 @@ type CreateOrderResponse struct {
 	OrderID int64 `json:"orderID"`
 }
 
-func (c *Client) CreateOrder(ctx context.Context, user int64, cartItems []domain.CartItem) (domain.OrderID, error) {
+func (c *Client) CreateOrder(ctx context.Context, user int64, cartItems []domain.CartItem) (int64, error) {
 	request := CreateOrderRequest{User: user}
 	for _, v := range cartItems {
 		request.Items = append(request.Items, Item{Sku: v.Sku, Count: v.Count})
 	}
-	var orderID domain.OrderID
 	response, err := clientwrapper.ClientRequest[CreateOrderRequest, CreateOrderResponse]()(ctx, c.urlCreateOrder, request)
 	if err != nil {
-		return orderID, errors.Wrap(err, "client request")
+		return 0, errors.Wrap(err, "client request")
 	}
-	orderID = domain.OrderID(response.OrderID)
 
-	return orderID, nil
+	return response.OrderID, nil
 }

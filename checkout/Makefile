@@ -38,3 +38,10 @@ install-smartimports: bindir
 	test -f ${SMARTIMPORTS} || \
 		(GOBIN=${BINDIR} go install github.com/pav5000/smartimports/cmd/smartimports@latest && \
 		mv ${BINDIR}/smartimports ${SMARTIMPORTS})
+
+generate:
+	mkdir -p pkg/checkout/v1
+	protoc -I api/checkout/v1 -I ../vendor-proto \
+	--go_out=pkg/checkout/v1 --go_opt=paths=source_relative \
+	--go-grpc_out=pkg/checkout/v1 --go-grpc_opt=paths=source_relative \
+	api/checkout/v1/domain.proto

@@ -4,7 +4,7 @@ services:
     image: checkout
     build: ./checkout/
     ports:
-      - "8081:8081"
+      - "50051:50051"
   loms:
     image: loms
     build: ./loms/

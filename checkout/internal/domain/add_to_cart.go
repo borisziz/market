@@ -14,7 +14,7 @@ var (
 	ErrInsufficientStocks = errors.New("insufficient stocks")
 )
 
-func (m *Domain) AddToCart(ctx context.Context, user int64, sku uint32, count uint16) error {
+func (m *domain) AddToCart(ctx context.Context, user int64, sku uint32, count uint16) error {
 	stocks, err := m.lOMSCaller.Stocks(ctx, sku)
 	if err != nil {
 		return errors.WithMessage(err, "checking stocks")

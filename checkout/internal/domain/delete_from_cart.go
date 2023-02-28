@@ -12,6 +12,6 @@ var (
 	ErrNoSoManyItems = errors.New("no so many items")
 )
 
-func (m *Domain) DeleteFromCart(ctx context.Context, user int64, sku uint32, count uint16) error {
+func (m *domain) DeleteFromCart(ctx context.Context, user int64, sku uint32, count uint16) error {
 	return nil
 }
