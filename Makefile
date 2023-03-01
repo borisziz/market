@@ -32,3 +32,7 @@ vendor-proto:
 			mv vendor-proto/protoc-gen-validate/validate/*.proto vendor-proto/validate &&\
 			rm -r -f vendor-proto/protoc-gen-validate ;\
 		fi
+
+generate-all:
+	cd checkout && GOOS=linux make generate
+	cd loms && GOOS=linux make generate
