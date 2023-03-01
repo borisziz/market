@@ -5,18 +5,39 @@ package checkout_v1;
 option go_package = "route256/checkout/pkg/checkout_v1;checkout_v1";
 
 import "google/protobuf/empty.proto";
+import "google/api/annotations.proto";
 import "validate/validate.proto";
 
 
 service CheckoutV1 {
   // Добваляет товар в корзину
-  rpc AddToCart(AddToCartRequest) returns(google.protobuf.Empty);
+  rpc AddToCart(AddToCartRequest) returns(google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/checkout/v1/add_to_cart"
+      body: "*"
+    };
+  };
   // Удаляет товар из корзины
-  rpc DeleteFromCart(DeleteFromCartRequest) returns (google.protobuf.Empty);
+  rpc DeleteFromCart(DeleteFromCartRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/checkout/v1/delete_from_cart"
+      body: "*"
+    };
+  };
   // Показывает список товаров в корзине
-  rpc ListCart(ListCartRequest) returns (ListCartResponse);
+  rpc ListCart(ListCartRequest) returns (ListCartResponse) {
+    option (google.api.http) = {
+      post: "/checkout/v1/list_cart"
+      body: "*"
+    };
+  };
   // Оформить заказ по все товарам корзины
-  rpc Purchase(PurchaseRequest) returns (PurchaseResponse);
+  rpc Purchase(PurchaseRequest) returns (PurchaseResponse) {
+    option (google.api.http) = {
+      post: "/checkout/v1/purchase"
+      body: "*"
+    };
+  };
 }
 
 message AddToCartRequest {

@@ -50,6 +50,8 @@ generate:
 	protoc -I api/checkout/v1 -I ../vendor-proto \
 	--go_out=pkg/checkout/v1 --go_opt=paths=source_relative \
 	--go-grpc_out=pkg/checkout/v1 --go-grpc_opt=paths=source_relative \
+	--grpc-gateway_out=pkg/checkout/v1 \
+    --grpc-gateway_opt=logtostderr=true --grpc-gateway_opt=paths=source_relative \
 	api/checkout/v1/domain.proto --validate_out lang=go:pkg/checkout/v1 \
 
 	mv pkg/checkout/v1/route256/checkout/pkg/checkout_v1/* pkg/checkout/v1

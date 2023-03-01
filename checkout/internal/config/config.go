@@ -8,8 +8,11 @@ import (
 )
 
 type ConfigStruct struct {
-	Token    string `yaml:"token"`
-	Port     string `yaml:"port"`
+	Token string `yaml:"token"`
+	Ports struct {
+		Http string `yaml:"http"`
+		Grpc string `yaml:"grpc"`
+	} `yaml:"ports"`
 	Services struct {
 		Loms     string `yaml:"loms"`
 		Products string `yaml:"products"`

@@ -5,20 +5,46 @@ package checkout_v1;
 option go_package = "route256/loms/pkg/loms_v1;loms_v1";
 
 import "google/protobuf/empty.proto";
+import "google/api/annotations.proto";
 import "validate/validate.proto";
 
 
 service LOMSV1 {
   // Создает новый заказ
-  rpc CreateOrder(CreateOrderRequest) returns(CreateOrderResponse);
+  rpc CreateOrder(CreateOrderRequest) returns(CreateOrderResponse) {
+    option (google.api.http) = {
+      post: "/loms/v1/create_order"
+      body: "*"
+    };
+  };
   // Показывает информацию по заказу
-  rpc ListOrder(ListOrderRequest) returns (ListOrderResponse);
+  rpc ListOrder(ListOrderRequest) returns (ListOrderResponse) {
+    option (google.api.http) = {
+      post: "/loms/v1/list_order"
+      body: "*"
+    };
+  };
   // Помечает заказ оплаченным
-  rpc OrderPayed(OrderPayedRequest) returns (google.protobuf.Empty);
+  rpc OrderPayed(OrderPayedRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/loms/v1/order_payed"
+      body: "*"
+    };
+  };
   // Отменяет заказ
-  rpc CancelOrder(CancelOrderRequest) returns (google.protobuf.Empty);
+  rpc CancelOrder(CancelOrderRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/loms/v1/cancel_order"
+      body: "*"
+    };
+  };
   // Возвращает количество товаров, которые можно купить с разных складов.
-  rpc Stocks(StocksRequest) returns (StocksResponse);
+  rpc Stocks(StocksRequest) returns (StocksResponse) {
+    option (google.api.http) = {
+      post: "/loms/v1/stocks"
+      body: "*"
+    };
+  };
 }
 
 
@@ -64,7 +90,7 @@ message CancelOrderRequest {
 }
 
 message StocksRequest {
-  uint32 sku = 1 [json_name = "sku", (validate.rules).uint32.gt = 0];
+  uint32 sku = 1;
 }
 
 message Stock {
@@ -75,4 +101,3 @@ message Stock {
 message StocksResponse {
   repeated Stock stocks = 1;
 }
-

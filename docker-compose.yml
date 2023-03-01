@@ -5,11 +5,13 @@ services:
     build: ./checkout/
     ports:
       - "50051:50051"
+      - "8081:8081"
   loms:
     image: loms
     build: ./loms/
     ports:
       - "50052:50052"
+      - "8082:8082"
   # notification:
   #   image: notification
   #   build: ./notification
