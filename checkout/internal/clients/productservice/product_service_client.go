@@ -2,70 +2,53 @@ package productservice
 
 import (
 	"context"
-	"route256/checkout/internal/domain"
-	"route256/libs/clientwrapper"
-
 	"github.com/pkg/errors"
+	"google.golang.org/grpc"
+	"route256/checkout/internal/domain"
+	product "route256/checkout/pkg/products"
 )
 
 type Client struct {
 	token string
-	url   string
-
-	urlProducts string
-	urlSKUs     string
+	c     product.ProductServiceClient
 }
 
-func New(token, url string) *Client {
+func New(token string, conn *grpc.ClientConn) *Client {
+	c := product.NewProductServiceClient(conn)
 	return &Client{
-		token:       token,
-		url:         url,
-		urlProducts: url + "/get_product",
-		urlSKUs:     url + "/list_skus",
+		token: token,
+		c:     c,
 	}
-}
-
-type ProductsRequest struct {
-	Token string `json:"token"`
-	SKU   uint32 `json:"sku"`
-}
-
-type ProductsResponse struct {
-	Name  string `json:"name"`
-	Price uint32 `json:"price"`
 }
 
 func (c *Client) GetProduct(ctx context.Context, sku uint32) (domain.ProductInfo, error) {
-	request := ProductsRequest{Token: c.token, SKU: sku}
+	request := &product.GetProductRequest{
+		Token: c.token,
+		Sku:   sku,
+	}
 	var productInfo domain.ProductInfo
-	response, err := clientwrapper.ClientRequest[ProductsRequest, ProductsResponse]()(ctx, c.urlProducts, request)
+	response, err := c.c.GetProduct(ctx, request)
 	if err != nil {
 		return productInfo, errors.Wrap(err, "client request")
 	}
-	productInfo.Name = response.Name
-	productInfo.Price = response.Price
+	productInfo.Name = response.GetName()
+	productInfo.Price = response.GetPrice()
 
 	return productInfo, nil
 }
 
-type SKUsRequest struct {
-	Token         string `json:"token"`
-	StartAfterSku int64  `json:"startAfterSku"`
-	Count         int64  `json:"count"`
-}
-
-type SKUsResponse struct {
-	SKUs []int64 `json:"skus"`
-}
-
 func (c *Client) GetSKUs(ctx context.Context) (domain.SKUs, error) {
-	request := SKUsRequest{Token: c.token, StartAfterSku: 0, Count: 1000}
-	response, err := clientwrapper.ClientRequest[SKUsRequest, SKUsResponse]()(ctx, c.urlSKUs, request)
+	request := &product.ListSkusRequest{
+		Token:         c.token,
+		StartAfterSku: 0,
+		Count:         1000,
+	}
+	response, err := c.c.ListSkus(ctx, request)
 	if err != nil {
 		return nil, errors.Wrap(err, "client request")
 	}
-	skus := make(domain.SKUs, len(response.SKUs))
-	for _, sku := range response.SKUs {
+	skus := make(domain.SKUs, len(response.GetSkus()))
+	for _, sku := range response.GetSkus() {
 		skus[sku] = struct{}{}
 	}
 	return skus, nil

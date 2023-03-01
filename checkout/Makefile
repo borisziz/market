@@ -45,3 +45,8 @@ generate:
 	--go_out=pkg/checkout/v1 --go_opt=paths=source_relative \
 	--go-grpc_out=pkg/checkout/v1 --go-grpc_opt=paths=source_relative \
 	api/checkout/v1/domain.proto
+	mkdir -p pkg/products
+	protoc -I api/products/ \
+		--go_out=pkg/products --go_opt=paths=source_relative \
+    	--go-grpc_out=pkg/products --go-grpc_opt=paths=source_relative \
+    	api/products/product-service.proto

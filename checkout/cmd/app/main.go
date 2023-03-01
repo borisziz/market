@@ -34,7 +34,12 @@ func main() {
 	}
 	defer connLoms.Close()
 	lomsClient := loms.New(connLoms)
-	productsServiceClient := productservice.New(config.ConfigData.Token, config.ConfigData.Services.Products)
+	connProducts, err := grpc.Dial(config.ConfigData.Services.Products, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatal("failed create products client: failed to connect to server:", err)
+	}
+	defer connProducts.Close()
+	productsServiceClient := productservice.New(config.ConfigData.Token, connProducts)
 	businessLogic := domain.New(lomsClient, productsServiceClient)
 
 	desc.RegisterCheckoutV1Server(grpcServer, checkout.New(businessLogic))

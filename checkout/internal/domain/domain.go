@@ -27,7 +27,7 @@ type domain struct {
 	productServiceCaller ProductServiceCaller
 }
 
-type SKUs map[int64]struct{}
+type SKUs map[uint32]struct{}
 
 func New(lOMSCaller LOMSCaller, productServiceCaller ProductServiceCaller) *domain {
 	return &domain{
