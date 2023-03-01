@@ -55,7 +55,7 @@ message Item {
 
 message CreateOrderRequest {
   int64 user = 1 [json_name = "user", (validate.rules).int64.gt = 0];
-  repeated Item items = 2;
+  repeated Item items = 2 [json_name = "user"];
 }
 
 message CreateOrderResponse {
@@ -90,7 +90,7 @@ message CancelOrderRequest {
 }
 
 message StocksRequest {
-  uint32 sku = 1;
+  uint32 sku = 1 [json_name = "sku", (validate.rules).uint32.gt = 0];
 }
 
 message Stock {

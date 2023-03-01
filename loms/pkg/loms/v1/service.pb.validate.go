@@ -905,7 +905,16 @@ func (m *StocksRequest) validate(all bool) error {
 
 	var errors []error
 
-	// no validation rules for Sku
+	if m.GetSku() <= 0 {
+		err := StocksRequestValidationError{
+			field:  "Sku",
+			reason: "value must be greater than 0",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
 	if len(errors) > 0 {
 		return StocksRequestMultiError(errors)
