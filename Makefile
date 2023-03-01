@@ -26,3 +26,9 @@ vendor-proto:
 			mv vendor-proto/protobuf/src/google/protobuf/*.proto vendor-proto/google/protobuf &&\
 			rm -rf vendor-proto/protobuf ;\
 		fi
+		@if [ ! -d vendor-proto/github.com/envoyproxy ]; then \
+			mkdir -p vendor-proto/validate &&\
+			git clone https://github.com/envoyproxy/protoc-gen-validate vendor-proto/protoc-gen-validate &&\
+			mv vendor-proto/protoc-gen-validate/validate/*.proto vendor-proto/validate &&\
+			rm -r -f vendor-proto/protoc-gen-validate ;\
+		fi

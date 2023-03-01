@@ -13,10 +13,10 @@ type ProductServiceCaller interface {
 
 type Domain interface {
 	CreateOrder(ctx context.Context, user int64, items []OrderItem) (int64, error)
-	ListOrder(ctx context.Context, user int64) (*Order, error)
-	CancelOrder(ctx context.Context, user int64) error
+	ListOrder(ctx context.Context, orderID int64) (*Order, error)
+	CancelOrder(ctx context.Context, orderID int64) error
 	Stocks(ctx context.Context, sku uint32) ([]Stock, error)
-	OrderPayed(ctx context.Context, user int64) error
+	OrderPayed(ctx context.Context, orderID int64) error
 }
 
 type domain struct {

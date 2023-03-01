@@ -7,7 +7,7 @@ import (
 )
 
 func (i *Implementation) CancelOrder(ctx context.Context, req *desc.CancelOrderRequest) (*emptypb.Empty, error) {
-	err := i.lOMSService.CancelOrder(ctx, req.GetUser())
+	err := i.lOMSService.CancelOrder(ctx, req.GetOrderID())
 	if err != nil {
 		return nil, err
 	}

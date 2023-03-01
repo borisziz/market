@@ -40,13 +40,17 @@ install-smartimports: bindir
 		mv ${BINDIR}/smartimports ${SMARTIMPORTS})
 
 generate:
-	mkdir -p pkg/checkout/v1
-	protoc -I api/checkout/v1 -I ../vendor-proto \
-	--go_out=pkg/checkout/v1 --go_opt=paths=source_relative \
-	--go-grpc_out=pkg/checkout/v1 --go-grpc_opt=paths=source_relative \
-	api/checkout/v1/domain.proto
 	mkdir -p pkg/products
 	protoc -I api/products/ \
 		--go_out=pkg/products --go_opt=paths=source_relative \
     	--go-grpc_out=pkg/products --go-grpc_opt=paths=source_relative \
     	api/products/product-service.proto
+
+	mkdir -p pkg/checkout/v1
+	protoc -I api/checkout/v1 -I ../vendor-proto \
+	--go_out=pkg/checkout/v1 --go_opt=paths=source_relative \
+	--go-grpc_out=pkg/checkout/v1 --go-grpc_opt=paths=source_relative \
+	api/checkout/v1/domain.proto --validate_out lang=go:pkg/checkout/v1 \
+
+	mv pkg/checkout/v1/route256/checkout/pkg/checkout_v1/* pkg/checkout/v1
+	rm -r  ./pkg/checkout/v1/route256

@@ -7,7 +7,7 @@ import (
 )
 
 func (i *Implementation) OrderPayed(ctx context.Context, req *desc.OrderPayedRequest) (*emptypb.Empty, error) {
-	err := i.lOMSService.OrderPayed(ctx, req.GetUser())
+	err := i.lOMSService.OrderPayed(ctx, req.GetOrderID())
 	if err != nil {
 		return nil, err
 	}

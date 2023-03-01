@@ -7,7 +7,7 @@ import (
 )
 
 func (i *Implementation) ListOrder(ctx context.Context, req *desc.ListOrderRequest) (*desc.ListOrderResponse, error) {
-	order, err := i.lOMSService.ListOrder(ctx, req.GetUser())
+	order, err := i.lOMSService.ListOrder(ctx, req.GetOrderID())
 	if err != nil {
 		return nil, err
 	}

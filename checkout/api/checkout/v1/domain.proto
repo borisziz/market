@@ -5,6 +5,8 @@ package checkout_v1;
 option go_package = "route256/checkout/pkg/checkout_v1;checkout_v1";
 
 import "google/protobuf/empty.proto";
+import "validate/validate.proto";
+
 
 service CheckoutV1 {
   // Добваляет товар в корзину
@@ -18,19 +20,19 @@ service CheckoutV1 {
 }
 
 message AddToCartRequest {
-  int64 user = 1;
-  uint32 sku = 2;
-  uint32 count = 3;
+  int64 user = 1 [json_name = "user", (validate.rules).int64.gt = 0];
+  uint32 sku = 2 [json_name = "sku", (validate.rules).uint32.gt = 0];
+  uint32 count = 3  [json_name = "count", (validate.rules).uint32.gt = 0];
 }
 
 message DeleteFromCartRequest {
-  int64 user = 1;
-  uint32 sku = 2;
-  uint32 count = 3;
+  int64 user = 1 [json_name = "user", (validate.rules).int64.gt = 0];
+  uint32 sku = 2 [json_name = "sku", (validate.rules).uint32.gt = 0];
+  uint32 count = 3  [json_name = "count", (validate.rules).uint32.gt = 0];
 }
 
 message ListCartRequest {
-  int64 user = 1;
+  int64 user = 1 [json_name = "user", (validate.rules).int64.gt = 0];
 }
 
 message CartItem {
@@ -46,7 +48,7 @@ message ListCartResponse {
 }
 
 message PurchaseRequest {
-  int64 user = 1;
+  int64 user = 1 [json_name = "user", (validate.rules).int64.gt = 0];
 }
 
 message PurchaseResponse {

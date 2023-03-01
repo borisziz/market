@@ -5,6 +5,8 @@ package checkout_v1;
 option go_package = "route256/loms/pkg/loms_v1;loms_v1";
 
 import "google/protobuf/empty.proto";
+import "validate/validate.proto";
+
 
 service LOMSV1 {
   // Создает новый заказ
@@ -21,12 +23,12 @@ service LOMSV1 {
 
 
 message Item {
-  uint32 sku = 1;
-  uint32 count = 2;
+  uint32 sku = 1 [json_name = "sku", (validate.rules).uint32.gt = 0];
+  uint32 count = 2 [json_name = "count", (validate.rules).uint32.gt = 0];
 }
 
 message CreateOrderRequest {
-  int64 user = 1;
+  int64 user = 1 [json_name = "user", (validate.rules).int64.gt = 0];
   repeated Item items = 2;
 }
 
@@ -35,7 +37,7 @@ message CreateOrderResponse {
 }
 
 message ListOrderRequest {
-  int64 user = 1;
+  int64 orderID = 1 [json_name = "order_id", (validate.rules).int64.gt = 0];
 }
 
 enum OrderStatus {
@@ -54,15 +56,15 @@ message ListOrderResponse {
 }
 
 message OrderPayedRequest {
-  int64 user = 1;
+  int64 orderID = 1 [json_name = "order_id", (validate.rules).int64.gt = 0];
 }
 
 message CancelOrderRequest {
-  int64 user = 1;
+  int64 orderID = 1 [json_name = "order_id", (validate.rules).int64.gt = 0];
 }
 
 message StocksRequest {
-  uint32 sku = 1;
+  uint32 sku = 1 [json_name = "sku", (validate.rules).uint32.gt = 0];
 }
 
 message Stock {
