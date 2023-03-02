@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	grpcMiddleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpcValidator "github.com/grpc-ecosystem/go-grpc-middleware/validator"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"google.golang.org/grpc"
@@ -16,6 +17,7 @@ import (
 	"route256/checkout/internal/config"
 	"route256/checkout/internal/domain"
 	desc "route256/checkout/pkg/checkout/v1"
+	"route256/libs/interceptors"
 	"sync"
 )
 
@@ -56,8 +58,14 @@ func runGRPC() error {
 	if err != nil {
 		return fmt.Errorf("failed listen tcp at %v port", config.ConfigData.Ports.Grpc)
 	}
-
-	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(grpcValidator.UnaryServerInterceptor()))
+	grpcServer := grpc.NewServer(
+		grpc.UnaryInterceptor(
+			grpcMiddleware.ChainUnaryServer(
+				interceptors.LoggingInterceptor,
+				grpcValidator.UnaryServerInterceptor(),
+			),
+		),
+	)
 
 	//clients
 	connLoms, err := grpc.Dial(config.ConfigData.Services.Loms, grpc.WithTransportCredentials(insecure.NewCredentials()))

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	grpcMiddleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpcValidator "github.com/grpc-ecosystem/go-grpc-middleware/validator"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"google.golang.org/grpc"
@@ -10,6 +11,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"route256/libs/interceptors"
 	"route256/loms/internal/api/loms/v1"
 	"route256/loms/internal/config"
 	"route256/loms/internal/domain"
@@ -55,7 +57,14 @@ func runGRPC() error {
 		return fmt.Errorf("failed listen tcp at %v port", config.ConfigData.Ports.Grpc)
 	}
 
-	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(grpcValidator.UnaryServerInterceptor()))
+	grpcServer := grpc.NewServer(
+		grpc.UnaryInterceptor(
+			grpcMiddleware.ChainUnaryServer(
+				interceptors.LoggingInterceptor,
+				grpcValidator.UnaryServerInterceptor(),
+			),
+		),
+	)
 
 	desc.RegisterLOMSV1Server(grpcServer, loms.New(domain.New()))
 	log.Printf("grps server running on port %v\n", config.ConfigData.Ports.Grpc)
