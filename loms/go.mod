@@ -3,6 +3,7 @@ module route256/loms
 go 1.19
 
 require (
+	github.com/brianvoe/gofakeit/v6 v6.20.1
 	github.com/envoyproxy/protoc-gen-validate v0.9.1
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.15.2

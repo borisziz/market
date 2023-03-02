@@ -3,6 +3,7 @@ package domain
 import (
 	"context"
 	"errors"
+	"github.com/brianvoe/gofakeit/v6"
 )
 
 var _ Domain = (*domain)(nil)
@@ -63,7 +64,7 @@ func getOrder(orderID int64) (*Order, error) {
 	if false {
 		return nil, ErrOrderNotFound
 	}
-	defaultItems := []OrderItem{{Sku: 1076963, Count: 1}, {Sku: 1148162, Count: 3}}
-	defaultOrder := &Order{ID: orderID, Status: StatusAwaitingPayment, User: 3, Items: defaultItems}
+	defaultItems := []OrderItem{{Sku: 1076963, Count: gofakeit.Uint16()}, {Sku: 1148162, Count: gofakeit.Uint16()}}
+	defaultOrder := &Order{ID: orderID, Status: StatusAwaitingPayment, User: gofakeit.Int64(), Items: defaultItems}
 	return defaultOrder, nil
 }
