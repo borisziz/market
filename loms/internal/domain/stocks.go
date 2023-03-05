@@ -1,16 +1,19 @@
 package domain
 
-import "context"
+import (
+	"context"
+	"github.com/brianvoe/gofakeit/v6"
+)
 
 type Stock struct {
 	WarehouseID int64
 	Count       uint64
 }
 
-func (d *Domain) Stocks(ctx context.Context, sku uint32) ([]Stock, error) {
+func (d *domain) Stocks(ctx context.Context, sku uint32) ([]Stock, error) {
 	return []Stock{
 		{
-			WarehouseID: 123,
-			Count:       5,
+			WarehouseID: gofakeit.Int64(),
+			Count:       gofakeit.Uint64(),
 		}}, nil
 }

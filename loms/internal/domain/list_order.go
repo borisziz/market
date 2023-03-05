@@ -6,7 +6,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (d *Domain) ListOrder(ctx context.Context, orderID int64) (*Order, error) {
+func (d *domain) ListOrder(ctx context.Context, orderID int64) (*Order, error) {
 	order, err := getOrder(orderID)
 	if err != nil {
 		return nil, errors.Wrap(err, "get order")

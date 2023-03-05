@@ -17,7 +17,7 @@ type CartItem struct {
 	ProductInfo
 }
 
-func (m *Domain) ListCart(ctx context.Context, user int64) ([]CartItem, error) {
+func (m *domain) ListCart(ctx context.Context, user int64) ([]CartItem, error) {
 	var items []CartItem
 	for i, sku := range []uint32{1076963, 1148162, 1625903, 2618151, 2956315} {
 		info, err := m.productServiceCaller.GetProduct(ctx, sku)

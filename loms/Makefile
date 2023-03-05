@@ -38,3 +38,15 @@ install-smartimports: bindir
 	test -f ${SMARTIMPORTS} || \
 		(GOBIN=${BINDIR} go install github.com/pav5000/smartimports/cmd/smartimports@latest && \
 		mv ${BINDIR}/smartimports ${SMARTIMPORTS})
+
+generate:
+	mkdir -p pkg/loms/v1
+	protoc -I api/loms/v1 -I ../vendor-proto \
+	--go_out=pkg/loms/v1 --go_opt=paths=source_relative \
+	--go-grpc_out=pkg/loms/v1 --go-grpc_opt=paths=source_relative \
+	--grpc-gateway_out=pkg/loms/v1 \
+    --grpc-gateway_opt=logtostderr=true --grpc-gateway_opt=paths=source_relative \
+	api/loms/v1/service.proto --validate_out lang=go:pkg/loms/v1 \
+
+	mv pkg/loms/v1/route256/loms/pkg/loms_v1/* pkg/loms/v1
+	rm -r  ./pkg/loms/v1/route256

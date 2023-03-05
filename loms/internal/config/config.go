@@ -9,7 +9,10 @@ import (
 
 type ConfigStruct struct {
 	Token string `yaml:"token"`
-	Port  string `yaml:"port"`
+	Ports struct {
+		Http string `yaml:"http"`
+		Grpc string `yaml:"grpc"`
+	} `yaml:"ports"`
 }
 
 var ConfigData ConfigStruct

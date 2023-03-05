@@ -1,0 +1,77 @@
+syntax = "proto3";
+
+package checkout_v1;
+
+option go_package = "route256/checkout/pkg/checkout_v1;checkout_v1";
+
+import "google/protobuf/empty.proto";
+import "google/api/annotations.proto";
+import "validate/validate.proto";
+
+
+service CheckoutV1 {
+  // Добваляет товар в корзину
+  rpc AddToCart(AddToCartRequest) returns(google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/checkout/v1/add_to_cart"
+      body: "*"
+    };
+  };
+  // Удаляет товар из корзины
+  rpc DeleteFromCart(DeleteFromCartRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/checkout/v1/delete_from_cart"
+      body: "*"
+    };
+  };
+  // Показывает список товаров в корзине
+  rpc ListCart(ListCartRequest) returns (ListCartResponse) {
+    option (google.api.http) = {
+      post: "/checkout/v1/list_cart"
+      body: "*"
+    };
+  };
+  // Оформить заказ по все товарам корзины
+  rpc Purchase(PurchaseRequest) returns (PurchaseResponse) {
+    option (google.api.http) = {
+      post: "/checkout/v1/purchase"
+      body: "*"
+    };
+  };
+}
+
+message AddToCartRequest {
+  int64 user = 1 [json_name = "user", (validate.rules).int64.gt = 0];
+  uint32 sku = 2 [json_name = "sku", (validate.rules).uint32.gt = 0];
+  uint32 count = 3  [json_name = "count", (validate.rules).uint32.gt = 0];
+}
+
+message DeleteFromCartRequest {
+  int64 user = 1 [json_name = "user", (validate.rules).int64.gt = 0];
+  uint32 sku = 2 [json_name = "sku", (validate.rules).uint32.gt = 0];
+  uint32 count = 3  [json_name = "count", (validate.rules).uint32.gt = 0];
+}
+
+message ListCartRequest {
+  int64 user = 1 [json_name = "user", (validate.rules).int64.gt = 0];
+}
+
+message CartItem {
+  uint32 sku = 1;
+  uint32 count = 2;
+  string name = 3;
+  uint32 price = 4;
+}
+
+message ListCartResponse {
+  repeated CartItem items = 1;
+  uint32 totalPrice = 2;
+}
+
+message PurchaseRequest {
+  int64 user = 1 [json_name = "user", (validate.rules).int64.gt = 0];
+}
+
+message PurchaseResponse {
+  int64 orderID = 1;
+}

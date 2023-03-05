@@ -1,18 +1,22 @@
 package main
 
 import (
+	"context"
+	"fmt"
+	grpcMiddleware "github.com/grpc-ecosystem/go-grpc-middleware"
+	grpcValidator "github.com/grpc-ecosystem/go-grpc-middleware/validator"
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"log"
+	"net"
 	"net/http"
-	"route256/libs/srvwrapper"
+	"route256/libs/interceptors"
+	"route256/loms/internal/api/loms/v1"
 	"route256/loms/internal/config"
 	"route256/loms/internal/domain"
-	"route256/loms/internal/handlers/cancelorder"
-	"route256/loms/internal/handlers/createorder"
-	"route256/loms/internal/handlers/listorder"
-	"route256/loms/internal/handlers/orderpayed"
-	"route256/loms/internal/handlers/stocks"
-
-	"github.com/gorilla/mux"
+	desc "route256/loms/pkg/loms/v1"
+	"sync"
 )
 
 func main() {
@@ -21,26 +25,69 @@ func main() {
 		log.Fatal("config init", err)
 	}
 
-	domain := domain.New()
+	ctx := context.Background()
 
-	stocksHandler := stocks.New(domain)
-	createOrderHandler := createorder.New(domain)
-	listOrderHandler := listorder.New(domain)
-	orderPayedHandler := orderpayed.New(domain)
-	cancelOrderHandler := cancelorder.New(domain)
+	var wg sync.WaitGroup
+	wg.Add(2)
 
-	r := mux.NewRouter()
-	r.Handle("/stocks", srvwrapper.New(stocksHandler.Handle)).Methods("POST")
+	go func() {
+		defer wg.Done()
 
-	r.Handle("/createOrder", srvwrapper.New(createOrderHandler.Handle)).Methods("POST")
+		err := runGRPC()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}()
 
-	r.Handle("/listOrder", srvwrapper.New(listOrderHandler.Handle)).Methods("POST")
+	go func() {
+		defer wg.Done()
 
-	r.Handle("/orderPayed", srvwrapper.New(orderPayedHandler.Handle)).Methods("POST")
+		err := runHTTP(ctx)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}()
 
-	r.Handle("/cancelOrder", srvwrapper.New(cancelOrderHandler.Handle)).Methods("POST")
+	wg.Wait()
+}
 
-	log.Println("listening http at", config.ConfigData.Port)
-	err = http.ListenAndServe(config.ConfigData.Port, r)
-	log.Fatal("cannot listen http", err)
+func runGRPC() error {
+	lis, err := net.Listen("tcp", config.ConfigData.Ports.Grpc)
+	if err != nil {
+		return fmt.Errorf("failed listen tcp at %v port", config.ConfigData.Ports.Grpc)
+	}
+
+	grpcServer := grpc.NewServer(
+		grpc.UnaryInterceptor(
+			grpcMiddleware.ChainUnaryServer(
+				interceptors.LoggingInterceptor,
+				grpcValidator.UnaryServerInterceptor(),
+			),
+		),
+	)
+
+	desc.RegisterLOMSV1Server(grpcServer, loms.New(domain.New()))
+	log.Printf("grps server running on port %v\n", config.ConfigData.Ports.Grpc)
+
+	err = grpcServer.Serve(lis)
+	if err != nil {
+		return fmt.Errorf("failed to serve: %v", err)
+	}
+	return nil
+}
+
+func runHTTP(ctx context.Context) error {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	mux := runtime.NewServeMux()
+	opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
+	err := desc.RegisterLOMSV1HandlerFromEndpoint(ctx, mux, config.ConfigData.Ports.Grpc, opts)
+	if err != nil {
+		return err
+	}
+
+	log.Printf("http server running on port %v\n", config.ConfigData.Ports.Http)
+
+	return http.ListenAndServe(config.ConfigData.Ports.Http, mux)
 }
