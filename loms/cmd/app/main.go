@@ -3,11 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	grpcMiddleware "github.com/grpc-ecosystem/go-grpc-middleware"
-	grpcValidator "github.com/grpc-ecosystem/go-grpc-middleware/validator"
-	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 	"log"
 	"net"
 	"net/http"
@@ -15,8 +10,16 @@ import (
 	"route256/loms/internal/api/loms/v1"
 	"route256/loms/internal/config"
 	"route256/loms/internal/domain"
+	repository "route256/loms/internal/repository/postgres"
+	"route256/loms/internal/repository/postgres/transactor"
 	desc "route256/loms/pkg/loms/v1"
 	"sync"
+
+	grpcMiddleware "github.com/grpc-ecosystem/go-grpc-middleware"
+	grpcValidator "github.com/grpc-ecosystem/go-grpc-middleware/validator"
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 func main() {
@@ -24,7 +27,6 @@ func main() {
 	if err != nil {
 		log.Fatal("config init", err)
 	}
-
 	ctx := context.Background()
 
 	var wg sync.WaitGroup
@@ -65,8 +67,12 @@ func runGRPC() error {
 			),
 		),
 	)
-
-	desc.RegisterLOMSV1Server(grpcServer, loms.New(domain.New()))
+	tm, err := transactor.New(config.ConfigData.DBConnectURL)
+	if err != nil {
+		log.Fatal("init transaction manager: ", err)
+	}
+	repo := repository.NewItemsRepo(tm)
+	desc.RegisterLOMSV1Server(grpcServer, loms.New(domain.New(repo, tm)))
 	log.Printf("grps server running on port %v\n", config.ConfigData.Ports.Grpc)
 
 	err = grpcServer.Serve(lis)

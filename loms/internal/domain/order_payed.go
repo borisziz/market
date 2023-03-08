@@ -7,21 +7,19 @@ import (
 )
 
 func (d *domain) OrderPayed(ctx context.Context, orderID int64) error {
-	order, err := getOrder(orderID)
+	err := d.TransactionManager.RunTransaction(context.Background(), func(ctxTX context.Context) error {
+		err := d.OrdersRepository.UpdateOrderStatus(ctxTX, orderID, StatusPayed, StatusAwaitingPayment)
+		if err != nil {
+			return errors.Wrap(err, "update status")
+		}
+		err = d.OrdersRepository.RemoveSoldedItems(ctxTX, orderID)
+		if err != nil {
+			return errors.Wrap(err, "remove solded items")
+		}
+		return nil
+	})
 	if err != nil {
-		return errors.Wrap(err, "get order")
+		return errors.Wrap(err, "order payed")
 	}
-	err = setItemsSold(order.Items)
-	if err != nil {
-		return errors.Wrap(err, "set items sold")
-	}
-	err = setOrderStatus(orderID, StatusPayed)
-	if err != nil {
-		return errors.Wrap(err, "set order status")
-	}
-	return nil
-}
-
-func setItemsSold(items []OrderItem) error {
 	return nil
 }

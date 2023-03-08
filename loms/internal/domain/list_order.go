@@ -7,7 +7,7 @@ import (
 )
 
 func (d *domain) ListOrder(ctx context.Context, orderID int64) (*Order, error) {
-	order, err := getOrder(orderID)
+	order, err := d.OrdersRepository.GetOrder(ctx, orderID)
 	if err != nil {
 		return nil, errors.Wrap(err, "get order")
 	}
