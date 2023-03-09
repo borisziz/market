@@ -2,8 +2,8 @@ package repository
 
 import (
 	"context"
+	transactor "route256/libs/postgres_transactor"
 	"route256/loms/internal/domain"
-	"route256/loms/internal/repository/postgres/transactor"
 	"route256/loms/internal/repository/schema"
 
 	sq "github.com/Masterminds/squirrel"
@@ -27,7 +27,6 @@ func NewItemsRepo(provider transactor.QueryEngineProvider) *OrdersRepo {
 var (
 	ordersColumns = []string{"id", "status", "user_id"}
 	itemColumns   = []string{"sku", "count"}
-	stocksColumns = []string{"sku", "count"}
 )
 
 const (

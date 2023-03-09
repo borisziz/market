@@ -7,7 +7,7 @@ import (
 )
 
 func (d *domain) OrderPayed(ctx context.Context, orderID int64) error {
-	err := d.TransactionManager.RunTransaction(context.Background(), func(ctxTX context.Context) error {
+	err := d.TransactionManager.RunTransaction(ctx, func(ctxTX context.Context) error {
 		err := d.OrdersRepository.UpdateOrderStatus(ctxTX, orderID, StatusPayed, StatusAwaitingPayment)
 		if err != nil {
 			return errors.Wrap(err, "update status")

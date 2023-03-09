@@ -17,14 +17,17 @@ type CartItem struct {
 	ProductInfo
 }
 
-func (m *domain) ListCart(ctx context.Context, user int64) ([]CartItem, error) {
-	var items []CartItem
-	for i, sku := range []uint32{1076963, 1148162, 1625903, 2618151, 2956315} {
-		info, err := m.productServiceCaller.GetProduct(ctx, sku)
+func (d *domain) ListCart(ctx context.Context, user int64) ([]CartItem, error) {
+	items, err := d.repo.GetCart(ctx, user)
+	if err != nil {
+		return nil, errors.Wrap(err, "get cart")
+	}
+	for i, item := range items {
+		info, err := d.productServiceCaller.GetProduct(ctx, item.Sku)
 		if err != nil {
 			return nil, errors.WithMessage(err, "getting product info")
 		}
-		items = append(items, CartItem{Sku: sku, Count: uint16(i % 3), ProductInfo: info})
+		items[i].ProductInfo = info
 	}
 	return items, nil
 }

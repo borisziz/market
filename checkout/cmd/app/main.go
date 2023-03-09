@@ -3,11 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	grpcMiddleware "github.com/grpc-ecosystem/go-grpc-middleware"
-	grpcValidator "github.com/grpc-ecosystem/go-grpc-middleware/validator"
-	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 	"log"
 	"net"
 	"net/http"
@@ -16,9 +11,18 @@ import (
 	"route256/checkout/internal/clients/productservice"
 	"route256/checkout/internal/config"
 	"route256/checkout/internal/domain"
+	repository "route256/checkout/internal/repository/postgres"
 	desc "route256/checkout/pkg/checkout/v1"
 	"route256/libs/interceptors"
+	transactor "route256/libs/postgres_transactor"
 	"sync"
+
+	grpcMiddleware "github.com/grpc-ecosystem/go-grpc-middleware"
+	grpcValidator "github.com/grpc-ecosystem/go-grpc-middleware/validator"
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"github.com/pkg/errors"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 func main() {
@@ -26,7 +30,6 @@ func main() {
 	if err != nil {
 		log.Fatal("config init", err)
 	}
-
 	ctx := context.Background()
 
 	var wg sync.WaitGroup
@@ -37,16 +40,15 @@ func main() {
 
 		err := runGRPC()
 		if err != nil {
-			log.Fatal(err)
+			log.Fatal("failed run grpc: ", err)
 		}
 	}()
-
 	go func() {
 		defer wg.Done()
 
 		err := runHTTP(ctx)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatal("failed run http: ", err)
 		}
 	}()
 
@@ -73,14 +75,23 @@ func runGRPC() error {
 		log.Fatal("failed create loms client: failed to connect to server:", err)
 	}
 	defer connLoms.Close()
-	lomsClient := loms.New(connLoms)
 	connProducts, err := grpc.Dial(config.ConfigData.Services.Products, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatal("failed create products client: failed to connect to server:", err)
 	}
 	defer connProducts.Close()
+	tm, err := transactor.New(config.ConfigData.DBConnectURL)
+	if err != nil {
+		log.Fatal("init transaction manager: ", err)
+	}
+	repo := repository.NewCartsRepo(tm)
+
+	lomsClient := loms.New(connLoms)
 	productsServiceClient := productservice.New(config.ConfigData.Token, connProducts)
-	businessLogic := domain.New(lomsClient, productsServiceClient)
+	businessLogic, err := domain.New(lomsClient, productsServiceClient, repo, tm)
+	if err != nil {
+		log.Fatal("init business logic", err)
+	}
 
 	desc.RegisterCheckoutV1Server(grpcServer, checkout.New(businessLogic))
 
@@ -101,7 +112,7 @@ func runHTTP(ctx context.Context) error {
 	opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
 	err := desc.RegisterCheckoutV1HandlerFromEndpoint(ctx, mux, config.ConfigData.Ports.Grpc, opts)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "register handler")
 	}
 
 	log.Printf("http server running on port %v\n", config.ConfigData.Ports.Http)

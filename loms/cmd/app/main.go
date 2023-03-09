@@ -7,11 +7,11 @@ import (
 	"net"
 	"net/http"
 	"route256/libs/interceptors"
+	transactor "route256/libs/postgres_transactor"
 	"route256/loms/internal/api/loms/v1"
 	"route256/loms/internal/config"
 	"route256/loms/internal/domain"
 	repository "route256/loms/internal/repository/postgres"
-	"route256/loms/internal/repository/postgres/transactor"
 	desc "route256/loms/pkg/loms/v1"
 	"sync"
 
