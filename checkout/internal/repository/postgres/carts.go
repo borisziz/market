@@ -32,13 +32,10 @@ const (
 	itemsTable = "cart_items"
 )
 
-var (
-	ErrOrderNotFound = errors.New("order not found")
-)
-
 func (r *CartsRepo) GetCartItem(ctx context.Context, user int64, sku uint32) (*domain.CartItem, error) {
 	db := r.QueryEngineProvider.GetQueryEngine(ctx)
-	query := sq.Select(itemColumns...).From(itemsTable).Where(sq.Eq{"user_id": user}).Where(sq.Eq{"sku": sku}).PlaceholderFormat(sq.Dollar)
+	query := sq.Select(itemColumns...).From(itemsTable).
+		Where(sq.Eq{"user_id": user, "sku": sku}).PlaceholderFormat(sq.Dollar)
 	rawQuery, args, err := query.ToSql()
 	if err != nil {
 		return nil, errors.Wrap(err, "build orders query")
@@ -47,7 +44,7 @@ func (r *CartsRepo) GetCartItem(ctx context.Context, user int64, sku uint32) (*d
 	err = pgxscan.Get(ctx, db, &item, rawQuery, args...)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return &domain.CartItem{}, domain.ErrNoSameItemsInCart
+			return nil, domain.ErrNoSameItemsInCart
 		}
 		return nil, errors.Wrap(err, "exec orders query")
 	}
@@ -56,7 +53,8 @@ func (r *CartsRepo) GetCartItem(ctx context.Context, user int64, sku uint32) (*d
 
 func (r *CartsRepo) GetCart(ctx context.Context, user int64) ([]domain.CartItem, error) {
 	db := r.QueryEngineProvider.GetQueryEngine(ctx)
-	query := sq.Select(itemColumns...).From(itemsTable).Where(sq.Eq{"user_id": user}).PlaceholderFormat(sq.Dollar)
+	query := sq.Select(itemColumns...).From(itemsTable).
+		Where(sq.Eq{"user_id": user}).PlaceholderFormat(sq.Dollar)
 	rawQuery, args, err := query.ToSql()
 	if err != nil {
 		return nil, errors.Wrap(err, "build orders query")
@@ -76,7 +74,9 @@ func (r *CartsRepo) GetCart(ctx context.Context, user int64) ([]domain.CartItem,
 func (r *CartsRepo) AddToCart(ctx context.Context, user int64, sku uint32, count uint16) error {
 	db := r.QueryEngineProvider.GetQueryEngine(ctx)
 
-	query := sq.Insert(itemsTable).Columns("user_id", "sku", "count").Values(user, sku, count).Suffix("ON CONFLICT(user_id, sku) DO UPDATE SET count = cart_items.count + ?", count).PlaceholderFormat(sq.Dollar)
+	query := sq.Insert(itemsTable).Columns("user_id", "sku", "count").Values(user, sku, count).
+		Suffix("ON CONFLICT(user_id, sku) DO UPDATE SET count = cart_items.count + ?", count).
+		PlaceholderFormat(sq.Dollar)
 	rawQuery, args, err := query.ToSql()
 	if err != nil {
 		return errors.Wrap(err, "build query")
@@ -100,7 +100,8 @@ func (r *CartsRepo) DeleteFromCart(ctx context.Context, user int64, sku uint32, 
 			return errors.Wrap(err, "build delete query")
 		}
 	} else {
-		query := sq.Update(itemsTable).Set("count", sq.Expr("count - ?", count)).Where(sq.Eq{"user_id": user}).Where(sq.Eq{"sku": sku}).PlaceholderFormat(sq.Dollar)
+		query := sq.Update(itemsTable).Set("count", sq.Expr("count - ?", count)).
+			Where(sq.Eq{"user_id": user, "sku": sku}).PlaceholderFormat(sq.Dollar)
 		rawQuery, args, err = query.ToSql()
 		if err != nil {
 			return errors.Wrap(err, "build update query")

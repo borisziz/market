@@ -18,7 +18,7 @@ func (d *domain) CreateOrder(ctx context.Context, user int64, items []OrderItem)
 	}
 	order.ID = orderID
 	go func() {
-		err = d.TransactionManager.RunTransaction(context.Background(), func(ctxTX context.Context) error {
+		err = d.TransactionManager.RunTransaction(context.Background(), isoLevelSerializable, func(ctxTX context.Context) error {
 			var reserveFrom []ReservedItem
 			for _, item := range order.Items {
 				stocks, err := d.OrdersRepository.Stocks(ctxTX, item.Sku)

@@ -10,8 +10,15 @@ type ProductServiceCaller interface {
 	GetProduct(ctx context.Context, sku uint32) (string, error)
 }
 
+const (
+	isoLevelSerializable    = "serializable"
+	isoLevelRepeatableRead  = "repeatable read"
+	isoLevelReadCommitted   = "read committed"
+	isoLevelReadUncommitted = "read uncommitted"
+)
+
 type TransactionManager interface {
-	RunTransaction(ctx context.Context, f func(ctxTX context.Context) error) error
+	RunTransaction(ctx context.Context, isoLevel string, f func(ctxTX context.Context) error) error
 }
 
 type OrdersRepository interface {

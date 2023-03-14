@@ -42,15 +42,29 @@ type txKey string
 
 const key = txKey("tx")
 
-func (tm *TransactionManager) RunTransaction(ctx context.Context, fx func(ctxTX context.Context) error) error {
-	tx, err := tm.pool.Begin(ctx)
+func (tm *TransactionManager) RunTransaction(ctx context.Context, isoLevel string, fx func(ctxTX context.Context) error) error {
+	var txIsoLevel pgx.TxIsoLevel
+	switch isoLevel {
+	case "serializable":
+		txIsoLevel = pgx.Serializable
+	case "repeatable read":
+		txIsoLevel = pgx.RepeatableRead
+	case "read committed":
+		txIsoLevel = pgx.ReadCommitted
+	case "read uncommitted":
+		txIsoLevel = pgx.ReadUncommitted
+	default:
+		txIsoLevel = pgx.Serializable
+	}
+	tx, err := tm.pool.BeginTx(ctx, pgx.TxOptions{
+		IsoLevel: txIsoLevel,
+	})
 	if err != nil {
 		return err
 	}
 	if err := fx(context.WithValue(ctx, key, tx)); err != nil {
 		return multierr.Combine(err, tx.Rollback(ctx))
 	}
-
 	if err := tx.Commit(ctx); err != nil {
 		return multierr.Combine(err, tx.Rollback(ctx))
 	}

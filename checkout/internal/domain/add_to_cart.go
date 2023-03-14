@@ -2,7 +2,6 @@ package domain
 
 import (
 	"context"
-
 	"github.com/pkg/errors"
 )
 
@@ -22,10 +21,13 @@ func (d *domain) AddToCart(ctx context.Context, user int64, sku uint32, count ui
 	if !ok {
 		return ErrInvalidSKU
 	}
-	err := d.tm.RunTransaction(ctx, func(ctxTX context.Context) error {
+	err := d.tm.RunTransaction(ctx, isoLevelSerializable, func(ctxTX context.Context) error {
 		item, err := d.repo.GetCartItem(ctxTX, user, sku)
 		if err != nil && !errors.Is(err, ErrNoSameItemsInCart) {
 			return errors.Wrap(err, "get cart item")
+		}
+		if errors.Is(err, ErrNoSameItemsInCart) {
+			item = &CartItem{}
 		}
 		stocks, err := d.lOMSCaller.Stocks(ctxTX, sku)
 		if err != nil {
