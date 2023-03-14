@@ -12,11 +12,17 @@ var (
 
 func (d *domain) CreateOrder(ctx context.Context, user int64, items []OrderItem) (int64, error) {
 	order := &Order{Status: StatusNew, User: user, Items: items}
-	orderID, err := d.OrdersRepository.CreateOrder(ctx, order)
+	err := d.TransactionManager.RunTransaction(context.Background(), isoLevelSerializable, func(ctxTX context.Context) error {
+		orderID, err := d.OrdersRepository.CreateOrder(ctxTX, order)
+		if err != nil {
+			return errors.Wrap(err, "create order")
+		}
+		order.ID = orderID
+		return nil
+	})
 	if err != nil {
-		return 0, errors.Wrap(err, "create order")
+		return 0, err
 	}
-	order.ID = orderID
 	go func() {
 		err = d.TransactionManager.RunTransaction(context.Background(), isoLevelSerializable, func(ctxTX context.Context) error {
 			var reserveFrom []ReservedItem
