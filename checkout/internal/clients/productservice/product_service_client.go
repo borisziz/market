@@ -2,10 +2,11 @@ package productservice
 
 import (
 	"context"
-	"github.com/pkg/errors"
-	"google.golang.org/grpc"
 	"route256/checkout/internal/domain"
 	product "route256/checkout/pkg/products"
+
+	"github.com/pkg/errors"
+	"google.golang.org/grpc"
 )
 
 type Client struct {

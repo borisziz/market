@@ -13,7 +13,8 @@ type ConfigStruct struct {
 		Http string `yaml:"http"`
 		Grpc string `yaml:"grpc"`
 	} `yaml:"ports"`
-	Services struct {
+	DBConnectURL string `yaml:"db_connect_url"`
+	Services     struct {
 		Loms     string `yaml:"loms"`
 		Products string `yaml:"products"`
 	} `yaml:"services"`

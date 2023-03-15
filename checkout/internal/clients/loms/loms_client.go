@@ -2,11 +2,11 @@ package loms
 
 import (
 	"context"
-	"google.golang.org/grpc"
 	"route256/checkout/internal/domain"
 	loms "route256/loms/pkg/loms/v1"
 
 	"github.com/pkg/errors"
+	"google.golang.org/grpc"
 )
 
 type Client struct {

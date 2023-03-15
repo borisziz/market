@@ -7,21 +7,19 @@ import (
 )
 
 func (d *domain) CancelOrder(ctx context.Context, orderID int64) error {
-	order, err := getOrder(orderID)
+	err := d.TransactionManager.RunTransaction(ctx, isoLevelSerializable, func(ctxTX context.Context) error {
+		err := d.OrdersRepository.UpdateOrderStatus(ctxTX, orderID, StatusCancelled, StatusAwaitingPayment)
+		if err != nil {
+			return errors.Wrap(err, "set order status")
+		}
+		err = d.OrdersRepository.UnReserveItems(ctxTX, orderID)
+		if err != nil {
+			return errors.Wrap(err, "set items sold")
+		}
+		return nil
+	})
 	if err != nil {
-		return errors.Wrap(err, "get order")
+		return errors.Wrap(err, "cancel order")
 	}
-	err = unreserveItems(order.Items)
-	if err != nil {
-		return errors.Wrap(err, "set items sold")
-	}
-	err = setOrderStatus(orderID, StatusCancelled)
-	if err != nil {
-		return errors.Wrap(err, "set order status")
-	}
-	return nil
-}
-
-func unreserveItems(items []OrderItem) error {
 	return nil
 }

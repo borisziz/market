@@ -2,8 +2,9 @@ package checkout
 
 import (
 	"context"
-	"google.golang.org/protobuf/types/known/emptypb"
 	desc "route256/checkout/pkg/checkout/v1"
+
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 func (i *Implementation) DeleteFromCart(ctx context.Context, req *desc.DeleteFromCartRequest) (*emptypb.Empty, error) {

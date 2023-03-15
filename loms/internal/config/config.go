@@ -13,6 +13,7 @@ type ConfigStruct struct {
 		Http string `yaml:"http"`
 		Grpc string `yaml:"grpc"`
 	} `yaml:"ports"`
+	DBConnectURL string `yaml:"db_connect_url"`
 }
 
 var ConfigData ConfigStruct

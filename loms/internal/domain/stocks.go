@@ -2,7 +2,8 @@ package domain
 
 import (
 	"context"
-	"github.com/brianvoe/gofakeit/v6"
+
+	"github.com/pkg/errors"
 )
 
 type Stock struct {
@@ -11,9 +12,9 @@ type Stock struct {
 }
 
 func (d *domain) Stocks(ctx context.Context, sku uint32) ([]Stock, error) {
-	return []Stock{
-		{
-			WarehouseID: gofakeit.Int64(),
-			Count:       gofakeit.Uint64(),
-		}}, nil
+	stocks, err := d.OrdersRepository.Stocks(ctx, sku)
+	if err != nil {
+		return nil, errors.Wrap(err, "get stocks")
+	}
+	return stocks, nil
 }

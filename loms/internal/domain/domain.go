@@ -2,14 +2,38 @@ package domain
 
 import (
 	"context"
-	"errors"
-	"github.com/brianvoe/gofakeit/v6"
 )
 
 var _ Domain = (*domain)(nil)
 
 type ProductServiceCaller interface {
 	GetProduct(ctx context.Context, sku uint32) (string, error)
+}
+
+const (
+	isoLevelSerializable    = "serializable"
+	isoLevelRepeatableRead  = "repeatable read"
+	isoLevelReadCommitted   = "read committed"
+	isoLevelReadUncommitted = "read uncommitted"
+)
+
+type TransactionManager interface {
+	RunTransaction(ctx context.Context, isoLevel string, f func(ctxTX context.Context) error) error
+}
+
+type OrdersRepository interface {
+	GetOrder(ctx context.Context, id int64) (*Order, error)
+	CreateOrder(ctx context.Context, order *Order) (int64, error)
+	UpdateOrderStatus(ctx context.Context, id int64, status string, statusNow string) error
+	ReserveStock(ctx context.Context, orderID int64, item ReservedItem) error
+	UnReserveItems(ctx context.Context, orderID int64) error
+	RemoveSoldedItems(ctx context.Context, orderID int64) error
+	Stocks(ctx context.Context, sku uint32) ([]Stock, error)
+}
+
+type Deps struct {
+	OrdersRepository
+	TransactionManager
 }
 
 type Domain interface {
@@ -21,12 +45,13 @@ type Domain interface {
 }
 
 type domain struct {
+	Deps
 }
 
 type SKUs map[int64]struct{}
 
-func New() *domain {
-	return &domain{}
+func New(repo OrdersRepository, tm TransactionManager) *domain {
+	return &domain{Deps{repo, tm}}
 }
 
 type OrderItem struct {
@@ -41,30 +66,16 @@ type Order struct {
 	Items  []OrderItem
 }
 
+type ReservedItem struct {
+	OrderItem
+	WarehouseID int64
+}
+
 const (
 	StatusNew             = "new"
 	StatusAwaitingPayment = "awaiting payment"
 	StatusFailed          = "failed"
-	StatusPayed           = "Payed"
-	StatusCancelled       = "Cancelled"
-	StatusUndefined       = "Undefined"
+	StatusPayed           = "payed"
+	StatusCancelled       = "cancelled"
+	StatusUndefined       = "undefined"
 )
-
-func createOrder(order Order) int64 {
-	return 5
-}
-
-func setOrderStatus(orderID int64, status string) error {
-	return nil
-}
-
-var ErrOrderNotFound = errors.New("order not found")
-
-func getOrder(orderID int64) (*Order, error) {
-	if false {
-		return nil, ErrOrderNotFound
-	}
-	defaultItems := []OrderItem{{Sku: 1076963, Count: gofakeit.Uint16()}, {Sku: 1148162, Count: gofakeit.Uint16()}}
-	defaultOrder := &Order{ID: orderID, Status: StatusAwaitingPayment, User: gofakeit.Int64(), Items: defaultItems}
-	return defaultOrder, nil
-}
