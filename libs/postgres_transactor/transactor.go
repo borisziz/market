@@ -14,6 +14,7 @@ type QueryEngine interface {
 	Query(ctx context.Context, query string, args ...interface{}) (pgx.Rows, error)
 	Exec(ctx context.Context, query string, args ...interface{}) (pgconn.CommandTag, error)
 	SendBatch(ctx context.Context, b *pgx.Batch) pgx.BatchResults
+	Begin(ctx context.Context) (pgx.Tx, error)
 }
 
 type QueryEngineProvider interface {

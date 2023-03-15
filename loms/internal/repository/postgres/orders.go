@@ -43,6 +43,12 @@ var (
 func (r *OrdersRepo) CreateOrder(ctx context.Context, order *domain.Order) (int64, error) {
 	db := r.QueryEngineProvider.GetQueryEngine(ctx)
 
+	tx, err := db.Begin(ctx)
+	if err != nil {
+		return 0, errors.Wrap(err, "run transaction")
+	}
+	defer tx.Rollback(ctx)
+
 	query := sq.Insert(ordersTable).Columns("status", "user_id").Values(order.Status, order.User).
 		Suffix("RETURNING id").PlaceholderFormat(sq.Dollar)
 
@@ -50,7 +56,7 @@ func (r *OrdersRepo) CreateOrder(ctx context.Context, order *domain.Order) (int6
 	if err != nil {
 		return 0, errors.Wrap(err, "build orders query")
 	}
-	err = pgxscan.Get(ctx, db, &order.ID, rawQuery, args...)
+	err = pgxscan.Get(ctx, tx, &order.ID, rawQuery, args...)
 	if err != nil {
 		return 0, errors.Wrap(err, "exec orders query")
 	}
@@ -62,9 +68,13 @@ func (r *OrdersRepo) CreateOrder(ctx context.Context, order *domain.Order) (int6
 	if err != nil {
 		return 0, errors.Wrap(err, "build items query")
 	}
-	_, err = db.Exec(ctx, rawQuery, args...)
+	_, err = tx.Exec(ctx, rawQuery, args...)
 	if err != nil {
 		return 0, errors.Wrap(err, "exec items query")
+	}
+	err = tx.Commit(ctx)
+	if err != nil {
+		return 0, errors.Wrap(err, "commit transaction")
 	}
 	return order.ID, nil
 }
@@ -166,6 +176,12 @@ func (r *OrdersRepo) UnReserveItems(ctx context.Context, orderID int64) error {
 func (r *OrdersRepo) RemoveSoldedItems(ctx context.Context, orderID int64) error {
 	db := r.QueryEngineProvider.GetQueryEngine(ctx)
 
+	tx, err := db.Begin(ctx)
+	if err != nil {
+		return errors.Wrap(err, "run transaction")
+	}
+	defer tx.Rollback(ctx)
+
 	query := sq.Delete(reservedItemsTable).Where(sq.Eq{"order_id": orderID}).
 		Suffix("RETURNING warehouse_id, sku, count").PlaceholderFormat(sq.Dollar)
 	rawQuery, args, err := query.ToSql()
@@ -173,7 +189,7 @@ func (r *OrdersRepo) RemoveSoldedItems(ctx context.Context, orderID int64) error
 		return errors.Wrap(err, "build insert query")
 	}
 	var soldedItems []schema.SoldedItem
-	err = pgxscan.Select(ctx, db, &soldedItems, rawQuery, args...)
+	err = pgxscan.Select(ctx, tx, &soldedItems, rawQuery, args...)
 	if err != nil {
 		return errors.Wrap(err, "exec insert query")
 	}
@@ -187,13 +203,17 @@ func (r *OrdersRepo) RemoveSoldedItems(ctx context.Context, orderID int64) error
 		}
 		b.Queue(rawQuery, args...)
 	}
-	br := db.SendBatch(ctx, b)
+	br := tx.SendBatch(ctx, b)
 	defer br.Close()
 	for i := 0; i < b.Len(); i++ {
 		_, err := br.Exec()
 		if err != nil {
 			return errors.Wrap(err, "process batch result")
 		}
+	}
+	err = tx.Commit(ctx)
+	if err != nil {
+		return errors.Wrap(err, "commit transaction")
 	}
 	return nil
 }

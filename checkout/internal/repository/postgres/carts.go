@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"fmt"
 	"route256/checkout/internal/domain"
 	"route256/checkout/internal/repository/schema"
 	transactor "route256/libs/postgres_transactor"
@@ -75,7 +76,7 @@ func (r *CartsRepo) AddToCart(ctx context.Context, user int64, sku uint32, count
 	db := r.QueryEngineProvider.GetQueryEngine(ctx)
 
 	query := sq.Insert(itemsTable).Columns("user_id", "sku", "count").Values(user, sku, count).
-		Suffix("ON CONFLICT(user_id, sku) DO UPDATE SET count = cart_items.count + ?", count).
+		Suffix(fmt.Sprintf("ON CONFLICT(user_id, sku) DO UPDATE SET count = %s.count + ?", itemsTable), count).
 		PlaceholderFormat(sq.Dollar)
 	rawQuery, args, err := query.ToSql()
 	if err != nil {
