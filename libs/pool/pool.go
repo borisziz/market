@@ -36,9 +36,9 @@ type pool struct {
 	errors chan error
 }
 
-func NewPool(ctx context.Context, amountWorkers uint16, maxRetries uint8, withCancelOrError bool) (Pool, <-chan error) {
+func NewPool(ctx context.Context, amountWorkers uint16, maxRetries uint8, withCancelOnError bool) (Pool, <-chan error) {
 	var cancel context.CancelFunc
-	if withCancelOrError {
+	if withCancelOnError {
 		ctx, cancel = context.WithCancel(ctx)
 	}
 	pool := &pool{
