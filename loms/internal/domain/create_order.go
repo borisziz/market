@@ -82,7 +82,7 @@ func (d *domain) CreateOrder(ctx context.Context, user int64, items []OrderItem)
 			}
 		}
 	}()
-	time.AfterFunc(30*time.Second, func() {
+	time.AfterFunc(10*time.Minute, func() {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 		err = d.OrdersRepository.UpdateOrderStatus(ctx, order.ID, StatusCancelled, StatusAwaitingPayment)
