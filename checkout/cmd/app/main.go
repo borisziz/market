@@ -16,11 +16,13 @@ import (
 	"route256/libs/interceptors"
 	transactor "route256/libs/postgres_transactor"
 	"sync"
+	"time"
 
 	grpcMiddleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpcValidator "github.com/grpc-ecosystem/go-grpc-middleware/validator"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/pkg/errors"
+	"golang.org/x/time/rate"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -87,8 +89,9 @@ func runGRPC() error {
 	repo := repository.NewCartsRepo(tm)
 
 	lomsClient := loms.New(connLoms)
+	limiter := rate.NewLimiter(rate.Every(time.Second/10), 10)
 	productsServiceClient := productservice.New(config.ConfigData.Token, connProducts)
-	businessLogic, err := domain.New(lomsClient, productsServiceClient, repo, tm)
+	businessLogic, err := domain.New(lomsClient, productsServiceClient, repo, tm, limiter)
 	if err != nil {
 		log.Fatal("init business logic", err)
 	}
