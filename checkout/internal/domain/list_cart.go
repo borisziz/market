@@ -32,10 +32,7 @@ func (d *domain) ListCart(ctx context.Context, user int64) ([]CartItem, error) {
 		item := item
 		var task pool.Task
 		task.Task = func() error {
-			err = d.rateLimiter.Wait(ctx)
-			if err != nil {
-				return err
-			}
+			_ = d.rateLimiter.Wait(ctx)
 			info, err := d.productServiceCaller.GetProduct(ctx, item.Sku)
 			if err != nil {
 				return err

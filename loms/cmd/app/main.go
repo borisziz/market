@@ -6,6 +6,8 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"os"
+	"os/signal"
 	"route256/libs/interceptors"
 	transactor "route256/libs/postgres_transactor"
 	"route256/loms/internal/api/loms/v1"
@@ -14,6 +16,8 @@ import (
 	repository "route256/loms/internal/repository/postgres"
 	desc "route256/loms/pkg/loms/v1"
 	"sync"
+	"syscall"
+	"time"
 
 	grpcMiddleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpcValidator "github.com/grpc-ecosystem/go-grpc-middleware/validator"
@@ -27,7 +31,8 @@ func main() {
 	if err != nil {
 		log.Fatal("config init", err)
 	}
-	ctx := context.Background()
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer cancel()
 
 	var wg sync.WaitGroup
 	wg.Add(2)
@@ -35,7 +40,7 @@ func main() {
 	go func() {
 		defer wg.Done()
 
-		err := runGRPC()
+		err := runGRPC(ctx)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -53,7 +58,7 @@ func main() {
 	wg.Wait()
 }
 
-func runGRPC() error {
+func runGRPC(ctx context.Context) error {
 	lis, err := net.Listen("tcp", config.ConfigData.Ports.Grpc)
 	if err != nil {
 		return fmt.Errorf("failed listen tcp at %v port", config.ConfigData.Ports.Grpc)
@@ -75,10 +80,16 @@ func runGRPC() error {
 	desc.RegisterLOMSV1Server(grpcServer, loms.New(domain.New(repo, tm)))
 	log.Printf("grps server running on port %v\n", config.ConfigData.Ports.Grpc)
 
-	err = grpcServer.Serve(lis)
-	if err != nil {
-		return fmt.Errorf("failed to serve: %v", err)
-	}
+	go func() {
+		err = grpcServer.Serve(lis)
+		if err != nil {
+			log.Fatal("failed to serve:", err)
+		}
+	}()
+
+	<-ctx.Done()
+	log.Println("shutting down grpc server")
+	grpcServer.GracefulStop()
 	return nil
 }
 
@@ -94,6 +105,19 @@ func runHTTP(ctx context.Context) error {
 	}
 
 	log.Printf("http server running on port %v\n", config.ConfigData.Ports.Http)
-
-	return http.ListenAndServe(config.ConfigData.Ports.Http, mux)
+	httpServer := &http.Server{
+		Handler: mux,
+		Addr:    config.ConfigData.Ports.Http,
+	}
+	go func() {
+		err = httpServer.ListenAndServe()
+		if err != nil {
+			log.Fatal("failed to serve:", err)
+		}
+	}()
+	<-ctx.Done()
+	ctxShutdown, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	log.Println("shutting down http server")
+	return httpServer.Shutdown(ctxShutdown)
 }

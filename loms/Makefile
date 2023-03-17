@@ -9,7 +9,7 @@ PACKAGE=route256/loms/cmd/app
 all: format build test lint
 
 build: bindir
-	go build -o ${BINDIR}/app ${PACKAGE}
+	go build -race -o ${BINDIR}/app ${PACKAGE}
 
 test:
 	go test ./...

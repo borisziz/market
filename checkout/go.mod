@@ -10,7 +10,6 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.15.2
 	github.com/jackc/pgx/v4 v4.18.1
 	github.com/pkg/errors v0.9.1
-	golang.org/x/time v0.1.0
 	google.golang.org/genproto v0.0.0-20230223222841-637eb2293923
 	google.golang.org/grpc v1.53.0
 	google.golang.org/protobuf v1.28.1
