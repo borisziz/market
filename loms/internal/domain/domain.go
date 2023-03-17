@@ -24,7 +24,7 @@ type TransactionManager interface {
 type OrdersRepository interface {
 	GetOrder(ctx context.Context, id int64) (*Order, error)
 	CreateOrder(ctx context.Context, order *Order) (int64, error)
-	UpdateOrderStatus(ctx context.Context, id int64, status string, statusNow string) error
+	UpdateOrderStatus(ctx context.Context, id int64, status string, statusBefore string) error
 	ReserveStock(ctx context.Context, orderID int64, item ReservedItem) error
 	UnReserveItems(ctx context.Context, orderID int64) error
 	RemoveSoldedItems(ctx context.Context, orderID int64) error

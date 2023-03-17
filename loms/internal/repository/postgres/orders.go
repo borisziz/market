@@ -36,10 +36,6 @@ const (
 	reservedItemsTable = "reserved_items"
 )
 
-var (
-	ErrOrderNotFound = errors.New("order not found")
-)
-
 func (r *OrdersRepo) CreateOrder(ctx context.Context, order *domain.Order) (int64, error) {
 	db := r.QueryEngineProvider.GetQueryEngine(ctx)
 
@@ -47,7 +43,9 @@ func (r *OrdersRepo) CreateOrder(ctx context.Context, order *domain.Order) (int6
 	if err != nil {
 		return 0, errors.Wrap(err, "run transaction")
 	}
-	defer tx.Rollback(ctx)
+	defer func() {
+		_ = tx.Rollback(ctx)
+	}()
 
 	query := sq.Insert(ordersTable).Columns("status", "user_id").Values(order.Status, order.User).
 		Suffix("RETURNING id").PlaceholderFormat(sq.Dollar)
@@ -93,7 +91,7 @@ func (r *OrdersRepo) GetOrder(ctx context.Context, orderID int64) (*domain.Order
 	err = pgxscan.Get(ctx, db, &order, rawQuery, args...)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, ErrOrderNotFound
+			return nil, domain.ErrOrderNotFound
 		}
 		return nil, errors.Wrap(err, "query order")
 	}
@@ -122,11 +120,11 @@ func (r *OrdersRepo) GetOrder(ctx context.Context, orderID int64) (*domain.Order
 	return result, nil
 }
 
-func (r *OrdersRepo) UpdateOrderStatus(ctx context.Context, id int64, status string, statusNow string) error {
+func (r *OrdersRepo) UpdateOrderStatus(ctx context.Context, id int64, status string, statusBefore string) error {
 	db := r.QueryEngineProvider.GetQueryEngine(ctx)
 
 	query := sq.Update(ordersTable).Set("status", status).
-		Where(sq.Eq{"id": id, "status": statusNow}).PlaceholderFormat(sq.Dollar)
+		Where(sq.Eq{"id": id, "status": statusBefore}).PlaceholderFormat(sq.Dollar)
 
 	rawQuery, args, err := query.ToSql()
 	if err != nil {
@@ -137,7 +135,7 @@ func (r *OrdersRepo) UpdateOrderStatus(ctx context.Context, id int64, status str
 		return errors.Wrap(err, "exec query")
 	}
 	if cmd.RowsAffected() == 0 {
-		return ErrOrderNotFound
+		return domain.ErrOrderNotFound
 	}
 	return nil
 }
@@ -180,8 +178,9 @@ func (r *OrdersRepo) RemoveSoldedItems(ctx context.Context, orderID int64) error
 	if err != nil {
 		return errors.Wrap(err, "run transaction")
 	}
-	defer tx.Rollback(ctx)
-
+	defer func() {
+		_ = tx.Rollback(ctx)
+	}()
 	query := sq.Delete(reservedItemsTable).Where(sq.Eq{"order_id": orderID}).
 		Suffix("RETURNING warehouse_id, sku, count").PlaceholderFormat(sq.Dollar)
 	rawQuery, args, err := query.ToSql()
@@ -211,6 +210,7 @@ func (r *OrdersRepo) RemoveSoldedItems(ctx context.Context, orderID int64) error
 			return errors.Wrap(err, "process batch result")
 		}
 	}
+	br.Close()
 	err = tx.Commit(ctx)
 	if err != nil {
 		return errors.Wrap(err, "commit transaction")

@@ -3,7 +3,6 @@ module route256/loms
 go 1.19
 
 require (
-	github.com/brianvoe/gofakeit/v6 v6.20.1
 	github.com/envoyproxy/protoc-gen-validate v0.9.1
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.15.2
@@ -25,7 +24,6 @@ require (
 	github.com/jackc/puddle v1.3.0 // indirect
 	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 // indirect
 	github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0 // indirect
-	go.uber.org/atomic v1.7.0 // indirect
 	golang.org/x/crypto v0.6.0 // indirect
 )
 
@@ -35,9 +33,7 @@ require (
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/jackc/pgx/v4 v4.18.1
 	github.com/kr/text v0.2.0 // indirect
-	go.uber.org/multierr v1.9.0
 	golang.org/x/net v0.7.0 // indirect
 	golang.org/x/sys v0.5.0 // indirect
 	golang.org/x/text v0.7.0 // indirect
-	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
