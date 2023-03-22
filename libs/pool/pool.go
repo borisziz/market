@@ -27,7 +27,7 @@ type pool struct {
 	amountWorkers uint16
 	//Чтобы в конце ждать пока все воркеры закончат свою работу
 	wgWorkers sync.WaitGroup
-	//Чтобы пержде чем закрыть канал с тасками, убедаться что все таски закончены(по скольку могут быть повторные попытки)
+	//Чтобы прежде чем закрыть канал с тасками, убеждаться что все таски закончены(по скольку могут быть повторные попытки)
 	wgTasks sync.WaitGroup
 	//Количество повторных попыток
 	maxRetries uint8
@@ -64,14 +64,11 @@ func (p *pool) startWorkers() {
 }
 
 func (p *pool) Submit(task Task) {
-	//Пока контекст не завершнен, отправляем таски
+	//Пока контекст не завершен, отправляем таски
 	select {
 	case <-p.ctx.Done():
 		return
 	case p.tasks <- task:
-		if task.attempts == 0 {
-			p.wgTasks.Add(1)
-		}
 	}
 }
 
@@ -85,10 +82,13 @@ func (p *pool) Close() {
 }
 
 func (p *pool) execute(task Task) {
+	if task.attempts == 0 {
+		p.wgTasks.Add(1)
+	}
 	err := task.Task()
 	if err != nil {
 		if task.attempts+1 < p.maxRetries {
-			//Отпарвляем ту же таску испольняться (в фоне, чтобы не блокировать worker-а) еще раз инкрементируя счетчик попыток
+			//Отправляем ту же таску исполняться (в фоне, чтобы не блокировать worker-а) еще раз инкрементируя счетчик попыток
 			task.attempts++
 			go p.Submit(task)
 		} else {
