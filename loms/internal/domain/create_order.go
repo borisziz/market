@@ -28,7 +28,7 @@ func (d *domain) CreateOrder(ctx context.Context, user int64, items []OrderItem)
 	go func() {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
-		err = d.TransactionManager.RunTransaction(ctx, isoLevelSerializable, func(ctxTX context.Context) error {
+		err = d.TransactionManager.RunTransaction(ctx, isoLevelRepeatableRead, func(ctxTX context.Context) error {
 			//Не получилось использовать worker pool
 			var reserveFrom []ReservedItem
 			for _, item := range order.Items {
