@@ -14,7 +14,7 @@ var (
 
 func (d *domain) CreateOrder(ctx context.Context, user int64, items []OrderItem) (int64, error) {
 	order := &Order{Status: StatusNew, User: user, Items: items}
-	err := d.TransactionManager.RunTransaction(context.Background(), isoLevelSerializable, func(ctxTX context.Context) error {
+	err := d.TransactionManager.RunTransaction(ctx, isoLevelRepeatableRead, func(ctxTX context.Context) error {
 		orderID, err := d.OrdersRepository.CreateOrder(ctxTX, order)
 		if err != nil {
 			return errors.Wrap(err, "create order")
@@ -44,7 +44,7 @@ func (d *domain) CreateOrder(ctx context.Context, user int64, items []OrderItem)
 							WarehouseID: stock.WarehouseID,
 							OrderItem: OrderItem{
 								Sku:   item.Sku,
-								Count: uint16(item.Count) - uint16(counter-stock.Count),
+								Count: item.Count - uint16(counter-stock.Count),
 							}})
 					} else {
 						reserveFrom = append(reserveFrom, ReservedItem{
