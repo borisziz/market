@@ -18,6 +18,10 @@ type ConfigStruct struct {
 		Loms     string `yaml:"loms"`
 		Products string `yaml:"products"`
 	} `yaml:"services"`
+	WorkerPool struct {
+		Workers uint16 `yaml:"workers"`
+		Retries uint8  `yaml:"retries"`
+	} `yaml:"worker_pool"`
 }
 
 var ConfigData ConfigStruct

@@ -6,6 +6,8 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"os"
+	"os/signal"
 	"route256/checkout/internal/api/checkout/v1"
 	"route256/checkout/internal/clients/loms"
 	"route256/checkout/internal/clients/productservice"
@@ -14,8 +16,11 @@ import (
 	repository "route256/checkout/internal/repository/postgres"
 	desc "route256/checkout/pkg/checkout/v1"
 	"route256/libs/interceptors"
+	"route256/libs/limiter"
 	transactor "route256/libs/postgres_transactor"
 	"sync"
+	"syscall"
+	"time"
 
 	grpcMiddleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpcValidator "github.com/grpc-ecosystem/go-grpc-middleware/validator"
@@ -30,7 +35,8 @@ func main() {
 	if err != nil {
 		log.Fatal("config init", err)
 	}
-	ctx := context.Background()
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer cancel()
 
 	var wg sync.WaitGroup
 	wg.Add(2)
@@ -38,7 +44,7 @@ func main() {
 	go func() {
 		defer wg.Done()
 
-		err := runGRPC()
+		err := runGRPC(ctx)
 		if err != nil {
 			log.Fatal("failed run grpc: ", err)
 		}
@@ -51,11 +57,10 @@ func main() {
 			log.Fatal("failed run http: ", err)
 		}
 	}()
-
 	wg.Wait()
 }
 
-func runGRPC() error {
+func runGRPC(ctx context.Context) error {
 	lis, err := net.Listen("tcp", config.ConfigData.Ports.Grpc)
 	if err != nil {
 		return fmt.Errorf("failed listen tcp at %v port", config.ConfigData.Ports.Grpc)
@@ -87,8 +92,10 @@ func runGRPC() error {
 	repo := repository.NewCartsRepo(tm)
 
 	lomsClient := loms.New(connLoms)
+	//limiter := rate.NewLimiter(rate.Every(time.Second/10), 15)
+	limiter := limiter.NewLimiter(10, 15)
 	productsServiceClient := productservice.New(config.ConfigData.Token, connProducts)
-	businessLogic, err := domain.New(lomsClient, productsServiceClient, repo, tm)
+	businessLogic, err := domain.New(lomsClient, productsServiceClient, repo, tm, limiter)
 	if err != nil {
 		log.Fatal("init business logic", err)
 	}
@@ -97,11 +104,19 @@ func runGRPC() error {
 
 	log.Printf("grps server running on port %v\n", config.ConfigData.Ports.Grpc)
 
-	err = grpcServer.Serve(lis)
-	if err != nil {
-		return fmt.Errorf("failed to serve: %v", err)
-	}
+	go func() {
+		err = grpcServer.Serve(lis)
+		if err != nil {
+			log.Fatal("failed to serve:", err)
+		}
+	}()
+
+	<-ctx.Done()
+	log.Println("shutting down grpc server")
+	grpcServer.GracefulStop()
+
 	return nil
+
 }
 
 func runHTTP(ctx context.Context) error {
@@ -116,6 +131,19 @@ func runHTTP(ctx context.Context) error {
 	}
 
 	log.Printf("http server running on port %v\n", config.ConfigData.Ports.Http)
-
-	return http.ListenAndServe(config.ConfigData.Ports.Http, mux)
+	httpServer := &http.Server{
+		Handler: mux,
+		Addr:    config.ConfigData.Ports.Http,
+	}
+	go func() {
+		err = httpServer.ListenAndServe()
+		if err != nil {
+			log.Fatal("failed to serve:", err)
+		}
+	}()
+	<-ctx.Done()
+	ctxShutdown, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	log.Println("shutting down http server")
+	return httpServer.Shutdown(ctxShutdown)
 }

@@ -8,7 +8,14 @@ import (
 
 func (d *domain) OrderPayed(ctx context.Context, orderID int64) error {
 	err := d.TransactionManager.RunTransaction(ctx, isoLevelSerializable, func(ctxTX context.Context) error {
-		err := d.OrdersRepository.UpdateOrderStatus(ctxTX, orderID, StatusPayed, StatusAwaitingPayment)
+		order, err := d.OrdersRepository.GetOrder(ctxTX, orderID)
+		if err != nil {
+			return errors.Wrap(err, "get order")
+		}
+		if order.Status != StatusAwaitingPayment {
+			return errWrongStatus
+		}
+		err = d.OrdersRepository.UpdateOrderStatus(ctxTX, orderID, StatusPayed, order.Status)
 		if err != nil {
 			return errors.Wrap(err, "update status")
 		}

@@ -44,9 +44,14 @@ type ProductServiceCaller interface {
 	GetSKUs(ctx context.Context) (SKUs, error)
 }
 
+type Limiter interface {
+	Wait(ctx context.Context) error
+}
+
 type domain struct {
 	lOMSCaller           LOMSCaller
 	productServiceCaller ProductServiceCaller
+	rateLimiter          Limiter
 	repo                 CartsRepository
 	tm                   TransactionManager
 	skus                 SKUs
@@ -54,7 +59,7 @@ type domain struct {
 
 type SKUs map[uint32]struct{}
 
-func New(lOMSCaller LOMSCaller, productServiceCaller ProductServiceCaller, repo CartsRepository, tm TransactionManager) (*domain, error) {
+func New(lOMSCaller LOMSCaller, productServiceCaller ProductServiceCaller, repo CartsRepository, tm TransactionManager, limiter Limiter) (*domain, error) {
 	skus, err := productServiceCaller.GetSKUs(context.Background())
 	if err != nil {
 		return nil, errors.Wrap(err, "init skus")
@@ -62,6 +67,7 @@ func New(lOMSCaller LOMSCaller, productServiceCaller ProductServiceCaller, repo 
 	return &domain{
 		lOMSCaller:           lOMSCaller,
 		productServiceCaller: productServiceCaller,
+		rateLimiter:          limiter,
 		repo:                 repo,
 		tm:                   tm,
 		skus:                 skus,
