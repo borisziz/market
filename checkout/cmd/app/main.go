@@ -95,7 +95,12 @@ func runGRPC(ctx context.Context) error {
 	//limiter := rate.NewLimiter(rate.Every(time.Second/10), 15)
 	limiter := limiter.NewLimiter(10, 15)
 	productsServiceClient := productservice.New(config.ConfigData.Token, connProducts)
-	businessLogic, err := domain.New(lomsClient, productsServiceClient, repo, tm, limiter)
+	poolConfig := domain.PoolConfig{
+		AmountWorkers:     config.ConfigData.WorkerPool.Workers,
+		MaxRetries:        config.ConfigData.WorkerPool.Retries,
+		WithCancelOnError: config.ConfigData.WorkerPool.WithCancelOnError,
+	}
+	businessLogic, err := domain.New(lomsClient, productsServiceClient, repo, tm, limiter, poolConfig)
 	if err != nil {
 		log.Fatal("init business logic", err)
 	}

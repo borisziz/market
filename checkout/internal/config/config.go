@@ -19,8 +19,9 @@ type ConfigStruct struct {
 		Products string `yaml:"products"`
 	} `yaml:"services"`
 	WorkerPool struct {
-		Workers uint16 `yaml:"workers"`
-		Retries uint8  `yaml:"retries"`
+		Workers           uint16 `yaml:"workers"`
+		Retries           uint8  `yaml:"retries"`
+		WithCancelOnError bool   `yaml:"with_cancel_on_error"`
 	} `yaml:"worker_pool"`
 }
 

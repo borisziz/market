@@ -1,5 +1,8 @@
 package transactor
 
+//go:generate sh -c "mkdir -p mocks && rm -rf mocks/manager_minimock.go"
+//go:generate minimock -i github.com/jackc/pgx/v4.Tx -o ./mocks/tx_minimock.go
+
 import (
 	"context"
 
@@ -39,9 +42,9 @@ func New(connectString string) (*TransactionManager, error) {
 	}, nil
 }
 
-type txKey string
+type TxKey string
 
-const key = txKey("tx")
+const key = TxKey("tx")
 
 func (tm *TransactionManager) RunTransaction(ctx context.Context, isoLevel string, fx func(ctxTX context.Context) error) error {
 	var txIsoLevel pgx.TxIsoLevel
