@@ -171,7 +171,7 @@ func (r *OrdersRepo) UnReserveItems(ctx context.Context, orderID int64) error {
 	return nil
 }
 
-func (r *OrdersRepo) RemoveSoldedItems(ctx context.Context, orderID int64) error {
+func (r *OrdersRepo) RemoveSoldItems(ctx context.Context, orderID int64) error {
 	db := r.QueryEngineProvider.GetQueryEngine(ctx)
 
 	tx, err := db.Begin(ctx)

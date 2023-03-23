@@ -10,27 +10,34 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestListOrder(t *testing.T) {
+func TestStocks(t *testing.T) {
 	type repositoryMockFunc func(mc *minimock.Controller) OrdersRepository
 	type tmMockFunc func(mc *minimock.Controller) TransactionManager
 
 	type args struct {
-		ctx     context.Context
-		orderID int64
+		ctx context.Context
+		sku uint32
 	}
 
 	var (
 		mc  = minimock.NewController(t)
 		ctx = context.Background()
 
-		getOrderErr = errors.New("get error")
-
-		orderID = gofakeit.Int64()
-		order   = &Order{
-			ID:     orderID,
-			Status: StatusAwaitingPayment,
-			User:   gofakeit.Int64(),
-			Items:  nil,
+		stocksErr = errors.New("stocks error")
+		sku       = gofakeit.Uint32()
+		stocks    = []Stock{
+			{
+				WarehouseID: gofakeit.Int64(),
+				Count:       gofakeit.Uint64(),
+			},
+			{
+				WarehouseID: gofakeit.Int64(),
+				Count:       gofakeit.Uint64(),
+			},
+			{
+				WarehouseID: gofakeit.Int64(),
+				Count:       gofakeit.Uint64(),
+			},
 		}
 	)
 	t.Cleanup(mc.Finish)
@@ -38,7 +45,7 @@ func TestListOrder(t *testing.T) {
 	tests := []struct {
 		name           string
 		args           args
-		want           *Order
+		want           []Stock
 		err            error
 		repositoryMock repositoryMockFunc
 		tmMock         tmMockFunc
@@ -46,14 +53,14 @@ func TestListOrder(t *testing.T) {
 		{
 			name: "positive case",
 			args: args{
-				ctx:     ctx,
-				orderID: orderID,
+				ctx: ctx,
+				sku: sku,
 			},
-			want: order,
+			want: stocks,
 			err:  nil,
 			repositoryMock: func(mc *minimock.Controller) OrdersRepository {
 				mock := NewOrdersRepositoryMock(t)
-				mock.GetOrderMock.Expect(ctx, orderID).Return(order, nil)
+				mock.StocksMock.Expect(ctx, sku).Return(stocks, nil)
 				return mock
 			},
 			tmMock: func(mc *minimock.Controller) TransactionManager {
@@ -62,15 +69,16 @@ func TestListOrder(t *testing.T) {
 			},
 		},
 		{
-			name: "negative case - get order",
+			name: "negative case - stocks error",
 			args: args{
-				ctx:     ctx,
-				orderID: orderID,
+				ctx: ctx,
+				sku: sku,
 			},
-			err: getOrderErr,
+			want: nil,
+			err:  stocksErr,
 			repositoryMock: func(mc *minimock.Controller) OrdersRepository {
 				mock := NewOrdersRepositoryMock(t)
-				mock.GetOrderMock.Expect(ctx, orderID).Return(nil, getOrderErr)
+				mock.StocksMock.Expect(ctx, sku).Return(nil, stocksErr)
 				return mock
 			},
 			tmMock: func(mc *minimock.Controller) TransactionManager {
@@ -88,8 +96,8 @@ func TestListOrder(t *testing.T) {
 				tt.repositoryMock(mc),
 				tt.tmMock(mc),
 			)
-			order, err := api.ListOrder(tt.args.ctx, tt.args.orderID)
-			require.Equal(t, tt.want, order)
+			result, err := api.Stocks(tt.args.ctx, tt.args.sku)
+			require.Equal(t, tt.want, result)
 			if tt.err != nil {
 				require.ErrorContains(t, err, tt.err.Error())
 			} else {

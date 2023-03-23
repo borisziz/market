@@ -12,7 +12,7 @@ build: bindir
 	go build -race -o ${BINDIR}/app ${PACKAGE}
 
 test:
-	go test ./...
+	go test -cover ./...
 
 run:
 	go run ${PACKAGE}

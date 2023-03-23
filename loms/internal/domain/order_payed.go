@@ -19,9 +19,9 @@ func (d *domain) OrderPayed(ctx context.Context, orderID int64) error {
 		if err != nil {
 			return errors.Wrap(err, "update status")
 		}
-		err = d.OrdersRepository.RemoveSoldedItems(ctxTX, orderID)
+		err = d.OrdersRepository.RemoveSoldItems(ctxTX, orderID)
 		if err != nil {
-			return errors.Wrap(err, "remove solded items")
+			return errors.Wrap(err, "remove sold items")
 		}
 		return nil
 	})
