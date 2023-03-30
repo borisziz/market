@@ -1,14 +1,14 @@
 package domain
 
+////go:generate sh -c "rm ./zzz*"
+//go:generate minimock -i OrdersRepository -o "./zzz_carts_repo_minimock_test.go"
+//go:generate minimock -i TransactionManager -o "./zzz_tm_minimock_test.go"
+
 import (
 	"context"
 )
 
 var _ Domain = (*domain)(nil)
-
-type ProductServiceCaller interface {
-	GetProduct(ctx context.Context, sku uint32) (string, error)
-}
 
 const (
 	isoLevelSerializable    = "serializable"
@@ -27,7 +27,7 @@ type OrdersRepository interface {
 	UpdateOrderStatus(ctx context.Context, id int64, status string, statusBefore string) error
 	ReserveStock(ctx context.Context, orderID int64, item ReservedItem) error
 	UnReserveItems(ctx context.Context, orderID int64) error
-	RemoveSoldedItems(ctx context.Context, orderID int64) error
+	RemoveSoldItems(ctx context.Context, orderID int64) error
 	Stocks(ctx context.Context, sku uint32) ([]Stock, error)
 }
 

@@ -12,7 +12,7 @@ build: bindir
 	go build -race -o ${BINDIR}/app ${PACKAGE}
 
 test:
-	go test ./...
+	go test -cover ./...
 
 run:
 	go run ${PACKAGE}
@@ -27,7 +27,7 @@ bindir:
 	mkdir -p ${BINDIR}
 
 format: install-smartimports
-	${SMARTIMPORTS} -exclude internal/mocks
+	${SMARTIMPORTS} -exclude internal/domain/zzz*
 
 install-lint: bindir
 	test -f ${LINTBIN} || \

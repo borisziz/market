@@ -2,7 +2,6 @@ package domain
 
 import (
 	"context"
-	"route256/checkout/internal/config"
 	"route256/libs/pool"
 
 	"github.com/pkg/errors"
@@ -25,8 +24,7 @@ func (d *domain) ListCart(ctx context.Context, user int64) ([]CartItem, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "get cart")
 	}
-	wp, errorsChan := pool.NewPool(ctx, config.ConfigData.WorkerPool.Workers,
-		config.ConfigData.WorkerPool.Retries, true)
+	wp, errorsChan := pool.NewPool(ctx, d.poolConfig.AmountWorkers, d.poolConfig.MaxRetries, d.poolConfig.WithCancelOnError)
 	for i, item := range items {
 		i := i
 		item := item

@@ -1,5 +1,8 @@
 package pool
 
+//go:generate sh -c "rm -rf mocks && mkdir -p mocks"
+//go:generate minimock -i Pool -o ./mocks/ -s "_minimock.go"
+
 import (
 	"context"
 	"sync"
@@ -65,6 +68,9 @@ func (p *pool) startWorkers() {
 
 func (p *pool) Submit(task Task) {
 	//Пока контекст не завершен, отправляем таски
+	if task.attempts == 0 {
+		p.wgTasks.Add(1)
+	}
 	select {
 	case <-p.ctx.Done():
 		return
@@ -82,9 +88,6 @@ func (p *pool) Close() {
 }
 
 func (p *pool) execute(task Task) {
-	if task.attempts == 0 {
-		p.wgTasks.Add(1)
-	}
 	err := task.Task()
 	if err != nil {
 		if task.attempts+1 < p.maxRetries {

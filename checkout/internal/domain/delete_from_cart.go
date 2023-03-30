@@ -13,13 +13,10 @@ var (
 )
 
 func (d *domain) DeleteFromCart(ctx context.Context, user int64, sku uint32, count uint16) error {
-	err := d.tm.RunTransaction(ctx, isoLevelSerializable, func(ctxTX context.Context) error {
+	err := d.tm.RunTransaction(ctx, isoLevelRepeatableRead, func(ctxTX context.Context) error {
 		item, err := d.repo.GetCartItem(ctxTX, user, sku)
-		if err != nil && !errors.Is(err, ErrNoSameItemsInCart) {
+		if err != nil {
 			return errors.Wrap(err, "get cart item")
-		}
-		if errors.Is(err, ErrNoSameItemsInCart) {
-			item = &CartItem{}
 		}
 		if count > item.Count {
 			return ErrNoSoManyItems
