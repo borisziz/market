@@ -9,11 +9,13 @@ import (
 	"os"
 	"os/signal"
 	"route256/libs/interceptors"
+	"route256/libs/kafka"
 	transactor "route256/libs/postgres_transactor"
 	"route256/loms/internal/api/loms/v1"
 	"route256/loms/internal/config"
 	"route256/loms/internal/domain"
 	repository "route256/loms/internal/repository/postgres"
+	"route256/loms/internal/sender"
 	desc "route256/loms/pkg/loms/v1"
 	"sync"
 	"syscall"
@@ -74,10 +76,15 @@ func runGRPC(ctx context.Context) error {
 	)
 	tm, err := transactor.New(config.ConfigData.DBConnectURL)
 	if err != nil {
-		log.Fatal("init transaction manager: ", err)
+		log.Fatal("init transaction manager:", err)
 	}
 	repo := repository.NewItemsRepo(tm)
-	desc.RegisterLOMSV1Server(grpcServer, loms.New(domain.New(repo, tm)))
+	producer, err := kafka.NewSyncProducer(config.ConfigData.Kafka.Brokers)
+	if err != nil {
+		log.Fatal("init kafka producer:", err)
+	}
+	ns := sender.NewOrderSender(producer, config.ConfigData.Kafka.Topic)
+	desc.RegisterLOMSV1Server(grpcServer, loms.New(domain.New(repo, tm, ns)))
 	log.Printf("grps server running on port %v\n", config.ConfigData.Ports.Grpc)
 
 	go func() {

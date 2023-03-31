@@ -14,6 +14,10 @@ type ConfigStruct struct {
 		Grpc string `yaml:"grpc"`
 	} `yaml:"ports"`
 	DBConnectURL string `yaml:"db_connect_url"`
+	Kafka        struct {
+		Brokers []string `yaml:"brokers"`
+		Topic   string   `yaml:"topic"`
+	} `yaml:"kafka"`
 }
 
 var ConfigData ConfigStruct
