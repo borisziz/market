@@ -19,5 +19,9 @@ func main() {
 		handlers[topic] = d.ReceiveOrder
 	}
 	cg := kafka.NewConsumerGroup(handlers, config.ConfigData.Kafka.Brokers, config.ConfigData.Kafka.Topics, config.ConfigData.Kafka.GroupName, config.ConfigData.Kafka.Strategy)
-	cg.Run(context.Background())
+	log.Println("waiting notifications")
+	err = cg.Run(context.Background())
+	if err != nil {
+		log.Fatal(err)
+	}
 }

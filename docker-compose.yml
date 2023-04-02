@@ -153,6 +153,7 @@ services:
       - zookeeper
     ports:
       - "9091:9091"
+    restart: on-failure
     environment:
       - KAFKA_LISTENERS=LISTENER_INT://kafka1:29091,LISTENER_EXT://0.0.0.0:9091
       - KAFKA_ADVERTISED_LISTENERS=LISTENER_INT://kafka1:29091,LISTENER_EXT://localhost:9091
@@ -171,6 +172,7 @@ services:
       - zookeeper
     ports:
       - "9092:9092"
+    restart: on-failure
     environment:
       - KAFKA_LISTENERS=LISTENER_INT://kafka2:29092,LISTENER_EXT://0.0.0.0:9092
       - KAFKA_ADVERTISED_LISTENERS=LISTENER_INT://kafka2:29092,LISTENER_EXT://localhost:9092
@@ -189,6 +191,7 @@ services:
       - zookeeper
     ports:
       - "9093:9093"
+    restart: on-failure
     environment:
       - KAFKA_LISTENERS=LISTENER_INT://kafka3:29093,LISTENER_EXT://0.0.0.0:9093
       - KAFKA_ADVERTISED_LISTENERS=LISTENER_INT://kafka3:29093,LISTENER_EXT://localhost:9093
@@ -198,4 +201,4 @@ services:
       - KAFKA_BROKER_ID=3
       - ZOOKEEPER=zookeeper:2181
     networks:
-          - net
+      - net
