@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
+	"go.uber.org/zap"
 	"net"
 	"net/http"
 	"os"
@@ -17,6 +17,7 @@ import (
 	desc "route256/checkout/pkg/checkout/v1"
 	"route256/libs/interceptors"
 	"route256/libs/limiter"
+	"route256/libs/logger"
 	transactor "route256/libs/postgres_transactor"
 	"sync"
 	"syscall"
@@ -31,9 +32,10 @@ import (
 )
 
 func main() {
+	logger.Init(true)
 	err := config.Init()
 	if err != nil {
-		log.Fatal("config init", err)
+		logger.Fatal("config init", zap.Error(err))
 	}
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
@@ -46,7 +48,7 @@ func main() {
 
 		err := runGRPC(ctx)
 		if err != nil {
-			log.Fatal("failed run grpc: ", err)
+			logger.Fatal("failed run grpc: ", zap.Error(err))
 		}
 	}()
 	go func() {
@@ -54,7 +56,7 @@ func main() {
 
 		err := runHTTP(ctx)
 		if err != nil {
-			log.Fatal("failed run http: ", err)
+			logger.Fatal("failed run http: ", zap.Error(err))
 		}
 	}()
 	wg.Wait()
@@ -77,17 +79,17 @@ func runGRPC(ctx context.Context) error {
 	//clients
 	connLoms, err := grpc.Dial(config.ConfigData.Services.Loms, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatal("failed create loms client: failed to connect to server:", err)
+		logger.Fatal("failed create loms client: failed to connect to server:", zap.Error(err))
 	}
 	defer connLoms.Close()
 	connProducts, err := grpc.Dial(config.ConfigData.Services.Products, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatal("failed create products client: failed to connect to server:", err)
+		logger.Fatal("failed create products client: failed to connect to server:", zap.Error(err))
 	}
 	defer connProducts.Close()
 	tm, err := transactor.New(config.ConfigData.DBConnectURL)
 	if err != nil {
-		log.Fatal("init transaction manager: ", err)
+		logger.Fatal("init transaction manager: ", zap.Error(err))
 	}
 	repo := repository.NewCartsRepo(tm)
 
@@ -102,22 +104,22 @@ func runGRPC(ctx context.Context) error {
 	}
 	businessLogic, err := domain.New(lomsClient, productsServiceClient, repo, tm, limiter, poolConfig)
 	if err != nil {
-		log.Fatal("init business logic", err)
+		logger.Fatal("init business logic", zap.Error(err))
 	}
 
 	desc.RegisterCheckoutV1Server(grpcServer, checkout.New(businessLogic))
 
-	log.Printf("grps server running on port %v\n", config.ConfigData.Ports.Grpc)
+	logger.Info("grps server running on port %v\n", zap.String("addr", config.ConfigData.Ports.Grpc))
 
 	go func() {
 		err = grpcServer.Serve(lis)
 		if err != nil {
-			log.Fatal("failed to serve:", err)
+			logger.Fatal("failed to serve:", zap.Error(err))
 		}
 	}()
 
 	<-ctx.Done()
-	log.Println("shutting down grpc server")
+	logger.Info("shutting down grpc server")
 	grpcServer.GracefulStop()
 
 	return nil
@@ -135,7 +137,7 @@ func runHTTP(ctx context.Context) error {
 		return errors.Wrap(err, "register handler")
 	}
 
-	log.Printf("http server running on port %v\n", config.ConfigData.Ports.Http)
+	logger.Info("http server running on port %v\n", zap.String("addr", config.ConfigData.Ports.Http))
 	httpServer := &http.Server{
 		Handler: mux,
 		Addr:    config.ConfigData.Ports.Http,
@@ -143,12 +145,12 @@ func runHTTP(ctx context.Context) error {
 	go func() {
 		err = httpServer.ListenAndServe()
 		if err != nil {
-			log.Fatal("failed to serve:", err)
+			logger.Fatal("failed to serve:", zap.Error(err))
 		}
 	}()
 	<-ctx.Done()
 	ctxShutdown, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
-	log.Println("shutting down http server")
+	logger.Info("shutting down http server")
 	return httpServer.Shutdown(ctxShutdown)
 }

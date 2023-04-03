@@ -2,7 +2,8 @@ package domain
 
 import (
 	"context"
-	"log"
+	"go.uber.org/zap"
+	"route256/libs/logger"
 	"time"
 
 	"github.com/pkg/errors"
@@ -78,21 +79,21 @@ func (d *domain) CreateOrder(ctx context.Context, user int64, items []OrderItem)
 			order.Status = StatusAwaitingPayment
 			err = d.NotificationsSender.SendOrder(order)
 			if err != nil {
-				log.Println("send order", err)
+				logger.Error("send order", zap.Error(err))
 			}
 			return nil
 		})
 		if err != nil {
-			log.Println("error create order", err)
+			logger.Error("error create order", zap.Error(err))
 			err = d.OrdersRepository.UpdateOrderStatus(ctx, order.ID, StatusFailed, order.Status)
 			if err != nil {
-				log.Println("error update order status", err)
+				logger.Error("error update order status", zap.Error(err))
 				return
 			}
 			order.Status = StatusFailed
 			err = d.NotificationsSender.SendOrder(order)
 			if err != nil {
-				log.Println("send order", err)
+				logger.Error("send order", zap.Error(err))
 			}
 		}
 	}()
@@ -101,13 +102,13 @@ func (d *domain) CreateOrder(ctx context.Context, user int64, items []OrderItem)
 		defer cancel()
 		err := d.OrdersRepository.UpdateOrderStatus(ctx, order.ID, StatusCancelled, StatusAwaitingPayment)
 		if err != nil && !errors.Is(err, ErrOrderNotFound) {
-			log.Println("error update order status", err)
+			logger.Error("error update order status", zap.Error(err))
 			return
 		}
 		order.Status = StatusCancelled
 		err = d.NotificationsSender.SendOrder(order)
 		if err != nil {
-			log.Println("send order", err)
+			logger.Error("send order", zap.Error(err))
 		}
 	})
 	return order.ID, nil

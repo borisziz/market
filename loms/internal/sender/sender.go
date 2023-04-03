@@ -2,7 +2,8 @@ package sender
 
 import (
 	"fmt"
-	"log"
+	"go.uber.org/zap"
+	"route256/libs/logger"
 	"route256/loms/internal/api/loms/v1"
 	"route256/loms/internal/domain"
 	desc "route256/loms/pkg/loms/v1"
@@ -59,6 +60,6 @@ func (s *orderSender) SendOrder(order *domain.Order) error {
 		return errors.Wrap(err, "send message")
 	}
 
-	log.Printf("order id: %d, partition: %d, offset: %d", order.ID, partition, offset)
+	logger.Debug("notification", zap.Int64("order id", order.ID), zap.Int32("partition", partition), zap.Int64("offset", offset))
 	return nil
 }
