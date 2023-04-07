@@ -3,6 +3,7 @@ package domain
 ////go:generate sh -c "rm ./zzz*"
 //go:generate minimock -i OrdersRepository -o "./zzz_carts_repo_minimock_test.go"
 //go:generate minimock -i TransactionManager -o "./zzz_tm_minimock_test.go"
+//go:generate minimock -i NotificationsSender -o "./zzz_ns_minimock_test.go"
 
 import (
 	"context"
@@ -31,9 +32,14 @@ type OrdersRepository interface {
 	Stocks(ctx context.Context, sku uint32) ([]Stock, error)
 }
 
+type NotificationsSender interface {
+	SendOrder(order *Order) error
+}
+
 type Deps struct {
 	OrdersRepository
 	TransactionManager
+	NotificationsSender
 }
 
 type Domain interface {
@@ -50,8 +56,24 @@ type domain struct {
 
 type SKUs map[int64]struct{}
 
-func New(repo OrdersRepository, tm TransactionManager) *domain {
-	return &domain{Deps{repo, tm}}
+func New(repo OrdersRepository, tm TransactionManager, ns NotificationsSender) *domain {
+	return &domain{Deps{repo, tm, ns}}
+}
+
+func NewMock(deps ...interface{}) *domain {
+	d := &domain{}
+
+	for _, v := range deps {
+		switch s := v.(type) {
+		case TransactionManager:
+			d.TransactionManager = s
+		case OrdersRepository:
+			d.OrdersRepository = s
+		case NotificationsSender:
+			d.NotificationsSender = s
+		}
+	}
+	return d
 }
 
 type OrderItem struct {

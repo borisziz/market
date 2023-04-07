@@ -6,8 +6,6 @@ import (
 	txMock "route256/libs/postgres_transactor/mocks"
 	"testing"
 
-	"github.com/brianvoe/gofakeit/v6"
-	"github.com/gojuno/minimock/v3"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 )
@@ -170,7 +168,7 @@ func TestCancelOrder(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			api := New(
+			api := NewMock(
 				tt.repositoryMock(mc),
 				tt.tmMock(mc),
 			)

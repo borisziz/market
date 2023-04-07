@@ -8,15 +8,11 @@ import (
 )
 
 type ConfigStruct struct {
-	Token string `yaml:"token"`
-	Ports struct {
-		Http string `yaml:"http"`
-		Grpc string `yaml:"grpc"`
-	} `yaml:"ports"`
-	DBConnectURL string `yaml:"db_connect_url"`
-	Kafka        struct {
-		Brokers []string `yaml:"brokers"`
-		Topic   string   `yaml:"topic"`
+	Kafka struct {
+		GroupName string   `yaml:"group_name"`
+		Brokers   []string `yaml:"brokers"`
+		Topics    []string `yaml:"topics"`
+		Strategy  string   `yaml:"strategy"`
 	} `yaml:"kafka"`
 }
 

@@ -25,6 +25,10 @@ func (d *domain) CreateOrder(ctx context.Context, user int64, items []OrderItem)
 	if err != nil {
 		return 0, err
 	}
+	err = d.NotificationsSender.SendOrder(order)
+	if err != nil {
+		return 0, errors.Wrap(err, "send order")
+	}
 	go func() {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
@@ -71,6 +75,11 @@ func (d *domain) CreateOrder(ctx context.Context, user int64, items []OrderItem)
 			if err != nil {
 				return errors.Wrap(err, "set order status")
 			}
+			order.Status = StatusAwaitingPayment
+			err = d.NotificationsSender.SendOrder(order)
+			if err != nil {
+				log.Println("send order", err)
+			}
 			return nil
 		})
 		if err != nil {
@@ -78,15 +87,27 @@ func (d *domain) CreateOrder(ctx context.Context, user int64, items []OrderItem)
 			err = d.OrdersRepository.UpdateOrderStatus(ctx, order.ID, StatusFailed, order.Status)
 			if err != nil {
 				log.Println("error update order status", err)
+				return
+			}
+			order.Status = StatusFailed
+			err = d.NotificationsSender.SendOrder(order)
+			if err != nil {
+				log.Println("send order", err)
 			}
 		}
 	}()
 	time.AfterFunc(10*time.Minute, func() {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
-		err = d.OrdersRepository.UpdateOrderStatus(ctx, order.ID, StatusCancelled, StatusAwaitingPayment)
+		err := d.OrdersRepository.UpdateOrderStatus(ctx, order.ID, StatusCancelled, StatusAwaitingPayment)
 		if err != nil && !errors.Is(err, ErrOrderNotFound) {
 			log.Println("error update order status", err)
+			return
+		}
+		order.Status = StatusCancelled
+		err = d.NotificationsSender.SendOrder(order)
+		if err != nil {
+			log.Println("send order", err)
 		}
 	})
 	return order.ID, nil

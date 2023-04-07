@@ -75,6 +75,13 @@ enum OrderStatus {
   Cancelled = 5;
 }
 
+message Order {
+  int64 id = 1;
+  OrderStatus status = 2;
+  int64 user = 3;
+  repeated Item items = 4;
+}
+
 message ListOrderResponse {
   OrderStatus status = 1;
   int64 user = 2;
