@@ -5,11 +5,15 @@ package transactor
 
 import (
 	"context"
+	"route256/libs/sqlmetrics"
 
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go/ext"
 	"github.com/pkg/errors"
+	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/multierr"
 )
 
@@ -37,6 +41,10 @@ func New(connectString string) (*TransactionManager, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "connect")
 	}
+	err = prometheus.Register(sqlmetrics.NewCollector(pool, config.ConnConfig.Database))
+	if err != nil {
+		return nil, errors.Wrap(err, "register collector")
+	}
 	return &TransactionManager{
 		pool: pool,
 	}, nil
@@ -47,6 +55,10 @@ type TxKey string
 const key = TxKey("tx")
 
 func (tm *TransactionManager) RunTransaction(ctx context.Context, isoLevel string, fx func(ctxTX context.Context) error) error {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "transaction")
+	defer span.Finish()
+	span.SetTag("level", isoLevel)
+
 	var txIsoLevel pgx.TxIsoLevel
 	switch isoLevel {
 	case "serializable":
@@ -64,12 +76,15 @@ func (tm *TransactionManager) RunTransaction(ctx context.Context, isoLevel strin
 		IsoLevel: txIsoLevel,
 	})
 	if err != nil {
+		ext.Error.Set(span, true)
 		return err
 	}
 	if err := fx(context.WithValue(ctx, key, tx)); err != nil {
+		ext.Error.Set(span, true)
 		return multierr.Combine(err, tx.Rollback(ctx))
 	}
 	if err := tx.Commit(ctx); err != nil {
+		ext.Error.Set(span, true)
 		return multierr.Combine(err, tx.Rollback(ctx))
 	}
 
@@ -79,8 +94,7 @@ func (tm *TransactionManager) RunTransaction(ctx context.Context, isoLevel strin
 func (tm *TransactionManager) GetQueryEngine(ctx context.Context) QueryEngine {
 	tx, ok := ctx.Value(key).(QueryEngine)
 	if ok && tx != nil {
-		return tx
+		return sqlmetrics.NewQueryEngine(tx, tm.pool.Config().ConnConfig.Database)
 	}
-
-	return tm.pool
+	return sqlmetrics.NewQueryEngine(tm.pool, tm.pool.Config().ConnConfig.Database)
 }

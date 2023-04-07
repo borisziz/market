@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"go.uber.org/zap"
 	"net"
 	"net/http"
 	"os"
@@ -19,20 +18,25 @@ import (
 	"route256/libs/limiter"
 	"route256/libs/logger"
 	transactor "route256/libs/postgres_transactor"
+	"route256/libs/tracing"
 	"sync"
 	"syscall"
 	"time"
 
+	"github.com/gorilla/mux"
 	grpcMiddleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpcValidator "github.com/grpc-ecosystem/go-grpc-middleware/validator"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/pkg/errors"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
 func main() {
 	logger.Init(true)
+	tracing.Init("checkout")
 	err := config.Init()
 	if err != nil {
 		logger.Fatal("config init", zap.Error(err))
@@ -70,6 +74,7 @@ func runGRPC(ctx context.Context) error {
 	grpcServer := grpc.NewServer(
 		grpc.UnaryInterceptor(
 			grpcMiddleware.ChainUnaryServer(
+				interceptors.ServerInterceptor,
 				interceptors.LoggingInterceptor,
 				grpcValidator.UnaryServerInterceptor(),
 			),
@@ -77,12 +82,14 @@ func runGRPC(ctx context.Context) error {
 	)
 
 	//clients
-	connLoms, err := grpc.Dial(config.ConfigData.Services.Loms, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	connLoms, err := grpc.Dial(config.ConfigData.Services.Loms,
+		grpc.WithUnaryInterceptor(interceptors.ClientInterceptor("loms")),
+		grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		logger.Fatal("failed create loms client: failed to connect to server:", zap.Error(err))
 	}
 	defer connLoms.Close()
-	connProducts, err := grpc.Dial(config.ConfigData.Services.Products, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	connProducts, err := grpc.Dial(config.ConfigData.Services.Products, grpc.WithUnaryInterceptor(interceptors.ClientInterceptor("products")), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		logger.Fatal("failed create products client: failed to connect to server:", zap.Error(err))
 	}
@@ -109,7 +116,7 @@ func runGRPC(ctx context.Context) error {
 
 	desc.RegisterCheckoutV1Server(grpcServer, checkout.New(businessLogic))
 
-	logger.Info("grps server running on port %v\n", zap.String("addr", config.ConfigData.Ports.Grpc))
+	logger.Info("grps server running on port", zap.String("addr", config.ConfigData.Ports.Grpc))
 
 	go func() {
 		err = grpcServer.Serve(lis)
@@ -130,16 +137,20 @@ func runHTTP(ctx context.Context) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
+	r := mux.NewRouter()
 	mux := runtime.NewServeMux()
+	r.PathPrefix("/checkout").Handler(mux)
+	r.Handle("/metrics", promhttp.Handler())
+
 	opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
 	err := desc.RegisterCheckoutV1HandlerFromEndpoint(ctx, mux, config.ConfigData.Ports.Grpc, opts)
 	if err != nil {
 		return errors.Wrap(err, "register handler")
 	}
 
-	logger.Info("http server running on port %v\n", zap.String("addr", config.ConfigData.Ports.Http))
+	logger.Info("http server running on port", zap.String("addr", config.ConfigData.Ports.Http))
 	httpServer := &http.Server{
-		Handler: mux,
+		Handler: r,
 		Addr:    config.ConfigData.Ports.Http,
 	}
 	go func() {

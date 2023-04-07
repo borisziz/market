@@ -1,6 +1,10 @@
 package logger
 
 import (
+	"context"
+
+	"github.com/opentracing/opentracing-go"
+	"github.com/uber/jaeger-client-go"
 	"go.uber.org/zap"
 )
 
@@ -35,7 +39,16 @@ func Info(msg string, fields ...zap.Field) {
 	globalLogger.Info(msg, fields...)
 }
 
-func Error(msg string, fields ...zap.Field) {
+func Error(ctx context.Context, msg string, fields ...zap.Field) {
+	span := opentracing.SpanFromContext(ctx)
+	if span != nil {
+		if spanContext, ok := span.Context().(jaeger.SpanContext); ok {
+			fields = append(fields,
+				zap.String("trace", spanContext.TraceID().String()),
+				zap.String("span", spanContext.SpanID().String()),
+			)
+		}
+	}
 	globalLogger.Error(msg, fields...)
 }
 

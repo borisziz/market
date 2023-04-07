@@ -1,0 +1,18 @@
+groups:
+  - name: alerts
+    rules:
+      - alert: TargetIsDown
+        expr: up == 0
+        for: 30s
+        labels:
+          severity: medium
+        annotations:
+          summary: "The target {{ $labels.job }} is down"
+          description: "Instance {{ $labels.instance }} of job {{ $labels.job }} has been down for more than 30 seconds."
+      - alert: ManyErrors
+        expr: rate(homework_grpc_responses_total{success="false"}[10s]) > 1
+        labels:
+          severity: medium
+        annotations:
+          summary: "The target {{ $labels.job }} returning errors"
+          description: "Instance {{ $labels.instance }} of job {{ $labels.job }} has return error more than 1 per second."

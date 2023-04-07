@@ -2,10 +2,10 @@ package interceptors
 
 import (
 	"context"
-	"go.uber.org/zap"
-
-	"google.golang.org/grpc"
 	"route256/libs/logger"
+
+	"go.uber.org/zap"
+	"google.golang.org/grpc"
 )
 
 // LoggingInterceptor ...
@@ -14,7 +14,7 @@ func LoggingInterceptor(ctx context.Context, req interface{}, info *grpc.UnarySe
 
 	res, err := handler(ctx, req)
 	if err != nil {
-		logger.Error("handler error", zap.String("method", info.FullMethod), zap.Error(err))
+		logger.Error(ctx, "handler error", zap.String("method", info.FullMethod), zap.Error(err))
 		return nil, err
 	}
 	logger.Debug("request succeed", zap.String("method", info.FullMethod))

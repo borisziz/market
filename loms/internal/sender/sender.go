@@ -2,7 +2,6 @@ package sender
 
 import (
 	"fmt"
-	"go.uber.org/zap"
 	"route256/libs/logger"
 	"route256/loms/internal/api/loms/v1"
 	"route256/loms/internal/domain"
@@ -11,6 +10,7 @@ import (
 
 	"github.com/Shopify/sarama"
 	"github.com/pkg/errors"
+	"go.uber.org/zap"
 	"google.golang.org/protobuf/encoding/protojson"
 )
 

@@ -2,9 +2,10 @@ package kafka
 
 import (
 	"context"
+	"sync"
+
 	"github.com/Shopify/sarama"
 	"github.com/pkg/errors"
-	"sync"
 )
 
 // Consumer represents a Sarama consumer group consumer
