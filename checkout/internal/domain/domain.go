@@ -56,12 +56,18 @@ type Limiter interface {
 	Wait(ctx context.Context) error
 }
 
+type Cache interface {
+	Get(key string) (interface{}, bool)
+	Set(key string, value interface{}, ttl time.Duration)
+}
+
 type domain struct {
 	lOMSCaller           LOMSCaller
 	productServiceCaller ProductServiceCaller
 	rateLimiter          Limiter
 	repo                 CartsRepository
 	tm                   TransactionManager
+	cache                Cache
 	poolConfig           PoolConfig
 	skus                 SKUs
 }
@@ -74,12 +80,13 @@ type PoolConfig struct {
 
 type SKUs map[uint32]struct{}
 
-func New(lOMSCaller LOMSCaller, productServiceCaller ProductServiceCaller, repo CartsRepository, tm TransactionManager, limiter Limiter, poolConfig PoolConfig) (*domain, error) {
+func New(lOMSCaller LOMSCaller, productServiceCaller ProductServiceCaller, repo CartsRepository, tm TransactionManager, limiter Limiter, poolConfig PoolConfig, cache Cache) (*domain, error) {
 	d := &domain{
 		lOMSCaller:           lOMSCaller,
 		productServiceCaller: productServiceCaller,
 		rateLimiter:          limiter,
 		repo:                 repo,
+		cache:                cache,
 		tm:                   tm,
 		poolConfig:           poolConfig,
 	}

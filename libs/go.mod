@@ -4,10 +4,14 @@ go 1.19
 
 require (
 	github.com/Shopify/sarama v1.38.1
+	github.com/allegro/bigcache/v3 v3.1.0
+	github.com/brianvoe/gofakeit/v6 v6.20.2
 	github.com/gojuno/minimock/v3 v3.1.2
+	github.com/hashicorp/golang-lru v0.5.1
 	github.com/jackc/pgconn v1.14.0
 	github.com/jackc/pgx/v4 v4.18.1
 	github.com/opentracing/opentracing-go v1.2.0
+	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.14.0
 	github.com/uber/jaeger-client-go v2.30.0+incompatible
