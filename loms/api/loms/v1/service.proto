@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package checkout_v1;
+package loms_v1;
 
 option go_package = "route256/loms/pkg/loms_v1;loms_v1";
 

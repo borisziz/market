@@ -215,7 +215,7 @@ func RegisterLOMSV1HandlerServer(ctx context.Context, mux *runtime.ServeMux, ser
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/checkout_v1.LOMSV1/CreateOrder", runtime.WithHTTPPathPattern("/loms/v1/create_order"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/loms_v1.LOMSV1/CreateOrder", runtime.WithHTTPPathPattern("/loms/v1/create_order"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -240,7 +240,7 @@ func RegisterLOMSV1HandlerServer(ctx context.Context, mux *runtime.ServeMux, ser
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/checkout_v1.LOMSV1/ListOrder", runtime.WithHTTPPathPattern("/loms/v1/list_order"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/loms_v1.LOMSV1/ListOrder", runtime.WithHTTPPathPattern("/loms/v1/list_order"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -265,7 +265,7 @@ func RegisterLOMSV1HandlerServer(ctx context.Context, mux *runtime.ServeMux, ser
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/checkout_v1.LOMSV1/OrderPayed", runtime.WithHTTPPathPattern("/loms/v1/order_payed"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/loms_v1.LOMSV1/OrderPayed", runtime.WithHTTPPathPattern("/loms/v1/order_payed"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -290,7 +290,7 @@ func RegisterLOMSV1HandlerServer(ctx context.Context, mux *runtime.ServeMux, ser
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/checkout_v1.LOMSV1/CancelOrder", runtime.WithHTTPPathPattern("/loms/v1/cancel_order"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/loms_v1.LOMSV1/CancelOrder", runtime.WithHTTPPathPattern("/loms/v1/cancel_order"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -315,7 +315,7 @@ func RegisterLOMSV1HandlerServer(ctx context.Context, mux *runtime.ServeMux, ser
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/checkout_v1.LOMSV1/Stocks", runtime.WithHTTPPathPattern("/loms/v1/stocks"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/loms_v1.LOMSV1/Stocks", runtime.WithHTTPPathPattern("/loms/v1/stocks"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -379,7 +379,7 @@ func RegisterLOMSV1HandlerClient(ctx context.Context, mux *runtime.ServeMux, cli
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/checkout_v1.LOMSV1/CreateOrder", runtime.WithHTTPPathPattern("/loms/v1/create_order"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/loms_v1.LOMSV1/CreateOrder", runtime.WithHTTPPathPattern("/loms/v1/create_order"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -401,7 +401,7 @@ func RegisterLOMSV1HandlerClient(ctx context.Context, mux *runtime.ServeMux, cli
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/checkout_v1.LOMSV1/ListOrder", runtime.WithHTTPPathPattern("/loms/v1/list_order"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/loms_v1.LOMSV1/ListOrder", runtime.WithHTTPPathPattern("/loms/v1/list_order"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -423,7 +423,7 @@ func RegisterLOMSV1HandlerClient(ctx context.Context, mux *runtime.ServeMux, cli
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/checkout_v1.LOMSV1/OrderPayed", runtime.WithHTTPPathPattern("/loms/v1/order_payed"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/loms_v1.LOMSV1/OrderPayed", runtime.WithHTTPPathPattern("/loms/v1/order_payed"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -445,7 +445,7 @@ func RegisterLOMSV1HandlerClient(ctx context.Context, mux *runtime.ServeMux, cli
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/checkout_v1.LOMSV1/CancelOrder", runtime.WithHTTPPathPattern("/loms/v1/cancel_order"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/loms_v1.LOMSV1/CancelOrder", runtime.WithHTTPPathPattern("/loms/v1/cancel_order"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -467,7 +467,7 @@ func RegisterLOMSV1HandlerClient(ctx context.Context, mux *runtime.ServeMux, cli
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/checkout_v1.LOMSV1/Stocks", runtime.WithHTTPPathPattern("/loms/v1/stocks"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/loms_v1.LOMSV1/Stocks", runtime.WithHTTPPathPattern("/loms/v1/stocks"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return

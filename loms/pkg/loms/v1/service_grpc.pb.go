@@ -8,7 +8,6 @@ package loms_v1
 
 import (
 	context "context"
-
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -46,7 +45,7 @@ func NewLOMSV1Client(cc grpc.ClientConnInterface) LOMSV1Client {
 
 func (c *lOMSV1Client) CreateOrder(ctx context.Context, in *CreateOrderRequest, opts ...grpc.CallOption) (*CreateOrderResponse, error) {
 	out := new(CreateOrderResponse)
-	err := c.cc.Invoke(ctx, "/checkout_v1.LOMSV1/CreateOrder", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/loms_v1.LOMSV1/CreateOrder", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +54,7 @@ func (c *lOMSV1Client) CreateOrder(ctx context.Context, in *CreateOrderRequest, 
 
 func (c *lOMSV1Client) ListOrder(ctx context.Context, in *ListOrderRequest, opts ...grpc.CallOption) (*ListOrderResponse, error) {
 	out := new(ListOrderResponse)
-	err := c.cc.Invoke(ctx, "/checkout_v1.LOMSV1/ListOrder", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/loms_v1.LOMSV1/ListOrder", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +63,7 @@ func (c *lOMSV1Client) ListOrder(ctx context.Context, in *ListOrderRequest, opts
 
 func (c *lOMSV1Client) OrderPayed(ctx context.Context, in *OrderPayedRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, "/checkout_v1.LOMSV1/OrderPayed", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/loms_v1.LOMSV1/OrderPayed", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +72,7 @@ func (c *lOMSV1Client) OrderPayed(ctx context.Context, in *OrderPayedRequest, op
 
 func (c *lOMSV1Client) CancelOrder(ctx context.Context, in *CancelOrderRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, "/checkout_v1.LOMSV1/CancelOrder", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/loms_v1.LOMSV1/CancelOrder", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +81,7 @@ func (c *lOMSV1Client) CancelOrder(ctx context.Context, in *CancelOrderRequest, 
 
 func (c *lOMSV1Client) Stocks(ctx context.Context, in *StocksRequest, opts ...grpc.CallOption) (*StocksResponse, error) {
 	out := new(StocksResponse)
-	err := c.cc.Invoke(ctx, "/checkout_v1.LOMSV1/Stocks", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/loms_v1.LOMSV1/Stocks", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -148,7 +147,7 @@ func _LOMSV1_CreateOrder_Handler(srv interface{}, ctx context.Context, dec func(
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/checkout_v1.LOMSV1/CreateOrder",
+		FullMethod: "/loms_v1.LOMSV1/CreateOrder",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(LOMSV1Server).CreateOrder(ctx, req.(*CreateOrderRequest))
@@ -166,7 +165,7 @@ func _LOMSV1_ListOrder_Handler(srv interface{}, ctx context.Context, dec func(in
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/checkout_v1.LOMSV1/ListOrder",
+		FullMethod: "/loms_v1.LOMSV1/ListOrder",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(LOMSV1Server).ListOrder(ctx, req.(*ListOrderRequest))
@@ -184,7 +183,7 @@ func _LOMSV1_OrderPayed_Handler(srv interface{}, ctx context.Context, dec func(i
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/checkout_v1.LOMSV1/OrderPayed",
+		FullMethod: "/loms_v1.LOMSV1/OrderPayed",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(LOMSV1Server).OrderPayed(ctx, req.(*OrderPayedRequest))
@@ -202,7 +201,7 @@ func _LOMSV1_CancelOrder_Handler(srv interface{}, ctx context.Context, dec func(
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/checkout_v1.LOMSV1/CancelOrder",
+		FullMethod: "/loms_v1.LOMSV1/CancelOrder",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(LOMSV1Server).CancelOrder(ctx, req.(*CancelOrderRequest))
@@ -220,7 +219,7 @@ func _LOMSV1_Stocks_Handler(srv interface{}, ctx context.Context, dec func(inter
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/checkout_v1.LOMSV1/Stocks",
+		FullMethod: "/loms_v1.LOMSV1/Stocks",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(LOMSV1Server).Stocks(ctx, req.(*StocksRequest))
@@ -232,7 +231,7 @@ func _LOMSV1_Stocks_Handler(srv interface{}, ctx context.Context, dec func(inter
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var LOMSV1_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "checkout_v1.LOMSV1",
+	ServiceName: "loms_v1.LOMSV1",
 	HandlerType: (*LOMSV1Server)(nil),
 	Methods: []grpc.MethodDesc{
 		{

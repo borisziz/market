@@ -1,8 +1,10 @@
 package domain
 
 import (
+	"context"
+	"go.uber.org/zap"
 	"google.golang.org/protobuf/encoding/protojson"
-	"log"
+	"route256/libs/logger"
 	desc "route256/loms/pkg/loms/v1"
 )
 
@@ -16,8 +18,8 @@ func (d *domain) ReceiveOrder(data []byte) {
 	var order desc.Order
 	err := protojson.Unmarshal(data, &order)
 	if err != nil {
-		log.Println("Unmarshal order", err)
+		logger.Error(context.Background(), "Unmarshal order", zap.Error(err))
 		return
 	}
-	log.Printf("%+v", order.String())
+	logger.Info("receive order", zap.Any("order", order.String()))
 }
