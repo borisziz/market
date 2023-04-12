@@ -28,13 +28,12 @@ func (d *domain) ListCart(ctx context.Context, user int64) ([]CartItem, error) {
 	}
 	wp, errorsChan := pool.NewPool(ctx, d.poolConfig.AmountWorkers, d.poolConfig.MaxRetries, d.poolConfig.WithCancelOnError)
 	for i, item := range items {
-		i := i
-		item := item
-		pi, ok := d.cache.Get(fmt.Sprintf("%d", item.Sku))
-		if ok {
+		if pi, ok := d.cache.Get(fmt.Sprintf("%d", item.Sku)); ok {
 			items[i].ProductInfo = pi.(ProductInfo)
 			continue
 		}
+		i := i
+		item := item
 		var task pool.Task
 		task.Task = func() error {
 			_ = d.rateLimiter.Wait(ctx)

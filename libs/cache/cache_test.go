@@ -12,23 +12,68 @@ import (
 	"time"
 )
 
-func BenchmarkCache(b *testing.B) {
-	c := NewCache(11, 180*time.Second, 6*time.Minute, 1000)
+func BenchmarkMyCache(b *testing.B) {
+	myCache := NewCache(11, 180*time.Second, 6*time.Minute, 1000)
+	goCache := gocache.New(1*time.Minute, 5*time.Minute)
+	bigCache, _ := bigcache.New(context.Background(), bigcache.DefaultConfig(10*time.Minute))
+	lruCache, _ := hashicorp.New(10000)
 	hits := 0
 	misses := 0
+
 	b.ResetTimer()
-	b.Run("Set", func(b *testing.B) {
+
+	b.Run("Set_my_cache", func(b *testing.B) {
+		if b.N == 1 {
+			return
+		}
 		alloc1 := memAlloc()
 		for i := 0; i < b.N; i++ {
-			c.Set(fmt.Sprintf("%d", i), gofakeit.Animal(), 15*time.Second)
+			myCache.Set(fmt.Sprintf("%d", i), gofakeit.Animal(), 15*time.Second)
 		}
 		alloc2 := memAlloc()
-		b.Log("bytes", alloc2-alloc1)
+		b.ReportMetric(float64(alloc2-alloc1), "allocated_bytes_total")
 	})
-	b.Run("Get", func(b *testing.B) {
+
+	b.Run("Add_go_cache", func(b *testing.B) {
+		if b.N == 1 {
+			return
+		}
 		alloc1 := memAlloc()
 		for i := 0; i < b.N; i++ {
-			value, _ := c.Get(fmt.Sprintf("%d", i))
+			goCache.Add(fmt.Sprintf("%d", i), gofakeit.Animal(), gocache.DefaultExpiration)
+		}
+		alloc2 := memAlloc()
+		b.ReportMetric(float64(alloc2-alloc1), "allocated_bytes_total")
+	})
+	b.Run("Set_big_cache", func(b *testing.B) {
+		if b.N == 1 {
+			return
+		}
+		alloc1 := memAlloc()
+		for i := 0; i < b.N; i++ {
+			bigCache.Set(fmt.Sprintf("%d", i), []byte(fmt.Sprintf("%v", gofakeit.Animal())))
+		}
+		alloc2 := memAlloc()
+		b.ReportMetric(float64(alloc2-alloc1), "allocated_bytes_total")
+	})
+	b.Run("Add_lru_cache", func(b *testing.B) {
+		if b.N == 1 {
+			return
+		}
+		alloc1 := memAlloc()
+		for i := 0; i < b.N; i++ {
+			lruCache.Add(fmt.Sprintf("%d", i), gofakeit.Animal())
+		}
+		alloc2 := memAlloc()
+		b.ReportMetric(float64(alloc2-alloc1), "allocated_bytes_total")
+	})
+
+	b.Run("Get_my_cache", func(b *testing.B) {
+		if b.N == 1 {
+			return
+		}
+		for i := 0; i < b.N; i++ {
+			value, _ := myCache.Get(fmt.Sprintf("%d", i))
 			if value != nil {
 				hits++
 				_ = value
@@ -36,28 +81,16 @@ func BenchmarkCache(b *testing.B) {
 				misses++
 			}
 		}
-		alloc2 := memAlloc()
-		b.Log("bytes", alloc2-alloc1)
-		b.Log("hits", hits, "misses", misses)
+		b.ReportMetric(float64(hits/b.N), "hits_rate")
 	})
-}
-
-func BenchmarkGoCache(b *testing.B) {
-	c := gocache.New(1*time.Minute, 5*time.Minute)
-	hits := 0
-	misses := 0
-	b.ResetTimer()
-	b.Run("Add", func(b *testing.B) {
-		alloc1 := memAlloc()
-		for i := 0; i < b.N; i++ {
-			c.Add(fmt.Sprintf("%d", i), gofakeit.Animal(), gocache.DefaultExpiration)
+	hits = 0
+	misses = 0
+	b.Run("Get_go_cache", func(b *testing.B) {
+		if b.N == 1 {
+			return
 		}
-		alloc2 := memAlloc()
-		b.Log("bytes", alloc2-alloc1)
-	})
-	b.Run("Get", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			value, found := c.Get(fmt.Sprintf("%d", i))
+			value, found := goCache.Get(fmt.Sprintf("%d", i))
 			if found {
 				hits++
 				_ = value
@@ -65,26 +98,17 @@ func BenchmarkGoCache(b *testing.B) {
 				misses++
 			}
 		}
-		b.Log("hits", hits, "misses", misses)
-	})
-}
+		b.ReportMetric(float64(hits/b.N), "hits_rate")
 
-func BenchmarkBigCache(b *testing.B) {
-	c, _ := bigcache.New(context.Background(), bigcache.DefaultConfig(10*time.Minute))
-	hits := 0
-	misses := 0
-	b.ResetTimer()
-	b.Run("Set", func(b *testing.B) {
-		alloc1 := memAlloc()
-		for i := 0; i < b.N; i++ {
-			c.Set(fmt.Sprintf("%d", i), []byte(fmt.Sprintf("%v", gofakeit.Animal())))
-		}
-		alloc2 := memAlloc()
-		b.Log("bytes", alloc2-alloc1)
 	})
-	b.Run("Get2", func(b *testing.B) {
+	hits = 0
+	misses = 0
+	b.Run("Get_big_cache", func(b *testing.B) {
+		if b.N == 1 {
+			return
+		}
 		for i := 0; i < b.N; i++ {
-			value, _ := c.Get(fmt.Sprintf("%d", i))
+			value, _ := bigCache.Get(fmt.Sprintf("%d", i))
 			if value != nil {
 				hits++
 				_ = value
@@ -92,29 +116,17 @@ func BenchmarkBigCache(b *testing.B) {
 				misses++
 			}
 		}
-		b.Log("hits", hits, "misses", misses)
+		b.ReportMetric(float64(hits/b.N), "hits_rate")
 	})
-}
-
-func BenchmarkCacheLRU(b *testing.B) {
-	ccc, _ := hashicorp.New(10000)
-	misses := 0
-	hits := 0
-	b.ResetTimer()
-
-	b.Run("Add", func(b *testing.B) {
-		alloc1 := memAlloc()
-		for i := 0; i < b.N; i++ {
-			ccc.Add(fmt.Sprintf("%d", i), gofakeit.Animal())
+	hits = 0
+	misses = 0
+	b.Run("Get_lru_cache", func(b *testing.B) {
+		if b.N == 1 {
+			return
 		}
-		alloc2 := memAlloc()
-		b.Log("bytes", alloc2-alloc1)
-	})
-
-	b.Run("Get", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 
-			value, err := ccc.Get(fmt.Sprintf("%d", i))
+			value, err := lruCache.Get(fmt.Sprintf("%d", i))
 			if err == true {
 				hits++
 				_ = value
@@ -122,10 +134,9 @@ func BenchmarkCacheLRU(b *testing.B) {
 				misses++
 			}
 		}
-		b.Log("hits", hits, "misses", misses)
+		b.ReportMetric(float64(hits/b.N), "hits_rate")
 
 	})
-
 }
 
 func memAlloc() uint64 {

@@ -12,11 +12,6 @@ type bucket struct {
 
 	evictList *list.List
 	maxLen    int
-
-	//deleteChan      chan *list.Element
-	//insertChan      chan *item
-	//moveToFrontChan chan *item
-	//evictChan       chan struct{}
 }
 
 type item struct {
@@ -31,34 +26,7 @@ func initBucket(maxLen int) *bucket {
 		lock:      sync.Mutex{},
 		evictList: list.New(),
 		maxLen:    maxLen,
-		//deleteChan:      make(chan *list.Element),
-		//insertChan:      make(chan *item),
-		//moveToFrontChan: make(chan *item),
-		//evictChan:       make(chan struct{}),
 	}
-	//go func() {
-	//	for {
-	//		select {
-	//		case item, ok := <-b.deleteChan:
-	//			if !ok {
-	//				break
-	//			}
-	//			b.deleteFromEvictList(item)
-	//		case item, ok := <-b.insertChan:
-	//			if !ok {
-	//				break
-	//			}
-	//			b.insertToEvictList(item)
-	//		case item, ok := <-b.moveToFrontChan:
-	//			if !ok {
-	//				break
-	//			}
-	//			b.moveFrontInEvictList(item)
-	//		case <-b.evictChan:
-	//			b.onEvict()
-	//		}
-	//	}
-	//}()
 	return b
 }
 
@@ -67,8 +35,10 @@ func (b *bucket) Get(key string) (interface{}, bool) {
 	defer b.lock.Unlock()
 	if val, ok := b.items[key]; ok {
 		if time.Now().Unix() > val.expiredAt {
+			//Если элемент просрочен, но чистка еще не прошла, не будем его возвращать
 			return nil, false
 		}
+		//Если все нашлось, то подвинем этот элемент в начало списка, как самый недавно запрошенный
 		b.evictList.MoveToFront(val.element)
 		return val.value, ok
 	} else {
@@ -79,15 +49,15 @@ func (b *bucket) Set(key string, value interface{}, ttl time.Duration) {
 	b.lock.Lock()
 	defer b.lock.Unlock()
 	if val, ok := b.items[key]; ok {
+		//Если элемент уже есть просто двигаем его вверх в списке
 		b.evictList.MoveToFront(val.element)
 		return
 	}
 	if len(b.items) >= b.maxLen {
+		//Если достигли максимума значений в бакете, то удаляем тот, который запрашивали давнее всех
 		item := b.evictList.Back()
-		//logger.Debug("list", zap.Any("list", b.evictList.Len()), zap.Any("item", item))
 		delete(b.items, item.Value.(string))
 		b.evictList.Remove(item)
-		//logger.Debug("evicted", zap.String("key", item.Value.(string)))
 	}
 	b.items[key] = &item{
 		value:     value,

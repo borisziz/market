@@ -16,3 +16,10 @@ groups:
         annotations:
           summary: "The target {{ $labels.job }} returning errors"
           description: "Instance {{ $labels.instance }} of job {{ $labels.job }} has return error more than 1 per second."
+      - alert: LowCacheHitRate
+        expr: rate(homework_cache_histogram_response_time_seconds_count{hit="true"}[10s]) / on(job, instance) rate(homework_cache_requests_total[10s])
+        labels:
+          severity: medium
+        annotations:
+          summary: "The target {{ $labels.job }} have a problem with cache"
+          description: "Instance {{ $labels.instance }} of job {{ $labels.job }} has less than 30% cache hit rate."
