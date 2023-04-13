@@ -38,7 +38,7 @@ func NewCache(numBuckets int32, defaultTTL time.Duration, cleanupInterval time.D
 		cleanupInterval = time.Minute
 	}
 	if defaultTTL == 0 {
-		defaultTTL = time.Minute * 5
+		defaultTTL = -1
 	}
 	c := &cache{
 		defaultTTL:      defaultTTL,
@@ -80,6 +80,9 @@ func (c *cache) Get(key string) (interface{}, bool) {
 }
 
 func (c *cache) Set(key string, value interface{}, ttl time.Duration) {
+	if ttl == 0 {
+		ttl = c.defaultTTL
+	}
 	h := fnv.New32a()
 	h.Write([]byte(key))
 	//По остатку от деления хэша ключа на количество бакетов значение кладется в определенный бакет

@@ -34,7 +34,7 @@ func (b *bucket) Get(key string) (interface{}, bool) {
 	b.lock.Lock()
 	defer b.lock.Unlock()
 	if val, ok := b.items[key]; ok {
-		if time.Now().Unix() > val.expiredAt {
+		if val.expiredAt > 0 && time.Now().Unix() > val.expiredAt {
 			//Если элемент просрочен, но чистка еще не прошла, не будем его возвращать
 			return nil, false
 		}
@@ -49,8 +49,14 @@ func (b *bucket) Set(key string, value interface{}, ttl time.Duration) {
 	b.lock.Lock()
 	defer b.lock.Unlock()
 	if val, ok := b.items[key]; ok {
-		//Если элемент уже есть просто двигаем его вверх в списке
-		b.evictList.MoveToFront(val.element)
+		//Если попали сюда потому что чистка еще не прошла, но элемент истек, просто обновим значения
+		if val.expiredAt > 0 && time.Now().Unix() > val.expiredAt {
+			val.value = value
+			val.expiredAt = time.Now().Add(ttl).Unix()
+			b.items[key] = val
+			b.evictList.MoveToFront(val.element)
+		}
+		//Если элемент уже есть, и он не истек, то выйдем
 		return
 	}
 	if len(b.items) >= b.maxLen {
@@ -59,11 +65,16 @@ func (b *bucket) Set(key string, value interface{}, ttl time.Duration) {
 		delete(b.items, item.Value.(string))
 		b.evictList.Remove(item)
 	}
-	b.items[key] = &item{
-		value:     value,
-		expiredAt: time.Now().Add(ttl).Unix(),
-		element:   b.evictList.PushFront(key),
+	item := &item{
+		value:   value,
+		element: b.evictList.PushFront(key),
 	}
+	if ttl > 0 {
+		item.expiredAt = time.Now().Add(ttl).Unix()
+	} else {
+		item.expiredAt = int64(ttl)
+	}
+	b.items[key] = item
 }
 
 func (b *bucket) cleanup() {
@@ -73,7 +84,7 @@ func (b *bucket) cleanup() {
 	for _, key := range keys {
 		b.lock.Lock()
 		item := b.items[key]
-		if time.Now().Unix() > item.expiredAt {
+		if item.expiredAt > 0 && time.Now().Unix() > item.expiredAt {
 			delete(b.items, key)
 			b.evictList.Remove(item.element)
 		}
