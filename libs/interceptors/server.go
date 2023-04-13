@@ -14,25 +14,13 @@ import (
 )
 
 var (
-	RequestsCounter = promauto.NewCounter(prometheus.CounterOpts{
-		Namespace: "homework",
-		Subsystem: "grpc",
-		Name:      "requests_total",
-	})
-	ResponseCounter = promauto.NewCounterVec(prometheus.CounterOpts{
-		Namespace: "homework",
-		Subsystem: "grpc",
-		Name:      "responses_total",
-	},
-		[]string{"success"},
-	)
 	HistogramResponseTime = promauto.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: "homework",
 		Subsystem: "grpc",
 		Name:      "histogram_response_time_seconds",
 		Buckets:   prometheus.ExponentialBuckets(0.0001, 2, 16),
 	},
-		[]string{"success"},
+		[]string{"handler", "success"},
 	)
 )
 
@@ -42,9 +30,6 @@ const (
 )
 
 func ServerInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
-
-	RequestsCounter.Inc()
-
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		md = metadata.New(nil)
@@ -62,12 +47,10 @@ func ServerInterceptor(ctx context.Context, req interface{}, info *grpc.UnarySer
 
 	res, err := handler(ctx, req)
 	if err != nil {
-		HistogramResponseTime.WithLabelValues(operationStatusFailed).Observe(time.Since(timeStart).Seconds())
-		ResponseCounter.WithLabelValues(operationStatusFailed).Inc()
+		HistogramResponseTime.WithLabelValues(info.FullMethod, operationStatusFailed).Observe(time.Since(timeStart).Seconds())
 		ext.Error.Set(span, true)
 	} else {
-		HistogramResponseTime.WithLabelValues(operationStatusSuccess).Observe(time.Since(timeStart).Seconds())
-		ResponseCounter.WithLabelValues(operationStatusSuccess).Inc()
+		HistogramResponseTime.WithLabelValues(info.FullMethod, operationStatusSuccess).Observe(time.Since(timeStart).Seconds())
 	}
 	return res, err
 }
