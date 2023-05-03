@@ -2,7 +2,9 @@ package domain
 
 import (
 	"context"
+	"fmt"
 	"route256/libs/pool"
+	"time"
 
 	"github.com/pkg/errors"
 )
@@ -26,6 +28,10 @@ func (d *domain) ListCart(ctx context.Context, user int64) ([]CartItem, error) {
 	}
 	wp, errorsChan := pool.NewPool(ctx, d.poolConfig.AmountWorkers, d.poolConfig.MaxRetries, d.poolConfig.WithCancelOnError)
 	for i, item := range items {
+		if pi, ok := d.cache.Get(fmt.Sprintf("%d", item.Sku)); ok {
+			items[i].ProductInfo = pi.(ProductInfo)
+			continue
+		}
 		i := i
 		item := item
 		var task pool.Task
@@ -37,6 +43,7 @@ func (d *domain) ListCart(ctx context.Context, user int64) ([]CartItem, error) {
 			}
 			//time.Sleep(time.Duration(i) * time.Second)
 			items[i].ProductInfo = info
+			d.cache.Set(fmt.Sprintf("%d", item.Sku), info, 10*time.Second)
 			return nil
 		}
 		wp.Submit(task)

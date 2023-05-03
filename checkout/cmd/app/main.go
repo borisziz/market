@@ -14,6 +14,7 @@ import (
 	"route256/checkout/internal/domain"
 	repository "route256/checkout/internal/repository/postgres"
 	desc "route256/checkout/pkg/checkout/v1"
+	"route256/libs/cache"
 	"route256/libs/interceptors"
 	"route256/libs/limiter"
 	"route256/libs/logger"
@@ -109,7 +110,8 @@ func runGRPC(ctx context.Context) error {
 		MaxRetries:        config.ConfigData.WorkerPool.Retries,
 		WithCancelOnError: config.ConfigData.WorkerPool.WithCancelOnError,
 	}
-	businessLogic, err := domain.New(lomsClient, productsServiceClient, repo, tm, limiter, poolConfig)
+	c := cache.NewCache(5, 30*time.Second, 180*time.Second, 4)
+	businessLogic, err := domain.New(lomsClient, productsServiceClient, repo, tm, limiter, poolConfig, c)
 	if err != nil {
 		logger.Fatal("init business logic", zap.Error(err))
 	}
